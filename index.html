@@ -20,7 +20,6 @@
       line-height: 1.5;
     }
 
-    /* glassmorphism sidebar */
     .sidebar {
       width: 280px;
       background: rgba(18, 22, 33, 0.75);
@@ -74,7 +73,8 @@
       letter-spacing: 0.4px;
     }
 
-    .nav-item:hover, .nav-item.active {
+    .nav-item:hover,
+    .nav-item.active {
       background: rgba(212, 175, 55, 0.15);
       border-color: #d4af37;
       color: #f5e7b3;
@@ -91,7 +91,6 @@
       backdrop-filter: blur(4px);
     }
 
-    /* glass cards */
     .card {
       background: rgba(20, 25, 39, 0.7);
       backdrop-filter: blur(16px);
@@ -116,6 +115,11 @@
       gap: 8px;
     }
 
+    h3 {
+      color: #d4af37;
+      margin: 1rem 0 0.5rem;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -130,7 +134,8 @@
       font-weight: bold;
     }
 
-    button, .btn {
+    button,
+    .btn {
       background: rgba(212, 175, 55, 0.2);
       border: 1px solid #d4af37;
       color: #fae576;
@@ -149,7 +154,8 @@
       box-shadow: 0 0 18px #f5cb5c;
     }
 
-    select, input {
+    select,
+    input {
       background: #1b1f2d;
       border: 1px solid #d4af37;
       color: white;
@@ -174,11 +180,27 @@
 
     td {
       padding: 0.7rem 0.8rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .hidden {
-      display: none !important;
+    .tournament-match {
+      background: rgba(212, 175, 55, 0.05);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 0.8rem 0;
+    }
+
+    .winner-badge {
+      background: linear-gradient(135deg, #d4af37, #f5cb5c);
+      color: #0a0c14;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+
+    .match-completed {
+      border-left: 4px solid #4caf50;
     }
 
     @media (max-width: 800px) {
@@ -216,9 +238,7 @@
     </nav>
   </aside>
 
-  <main class="main-panel" id="mainContent">
-    <!-- dynamic page content injected by JS -->
-  </main>
+  <main class="main-panel" id="mainContent"></main>
 
   <script>
     (function() {
@@ -256,6 +276,8 @@
             matches: [],
             tournaments: [],
             cups: [],
+            activeTournament: null,
+            activeCup: null,
             hallOfFame: { tournamentKing: null, legendaryPlayer: null, mythicMaster: null }
           };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
@@ -266,6 +288,7 @@
       function getDB() {
         return JSON.parse(localStorage.getItem(STORAGE_KEY));
       }
+
       function saveDB(db) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
       }
@@ -273,7 +296,8 @@
       // ---------- HELPERS ----------
       function updatePlayerStatsAfterMatch(matchData) {
         const db = getDB();
-        const { participants, positions } = matchData; // positions: array of {playerId, place}
+        const { participants, positions } = matchData;
+
         participants.forEach(pid => {
           const player = db.players.find(p => p.id === pid);
           if (!player) return;
@@ -300,17 +324,15 @@
             player.losses += 1;
             player.currentWinStreak = 0;
           }
-          const pointsMap = {1:18, 2:15, 3:13, 4:12, 5:11};
+          const pointsMap = { 1: 18, 2: 15, 3: 13, 4: 12, 5: 11 };
           player.totalPoints += (pointsMap[entry.place] || 0);
         });
 
-        // recalc win rates
         db.players.forEach(p => {
           p.winRate = p.matchesPlayed > 0 ? ((p.wins / p.matchesPlayed) * 100).toFixed(1) : 0;
         });
 
-        // rankings based on win rate > mvp > matches
-        const sorted = [...db.players].sort((a,b) => {
+        const sorted = [...db.players].sort((a, b) => {
           if (b.winRate !== a.winRate) return b.winRate - a.winRate;
           if (b.mvpCount !== a.mvpCount) return b.mvpCount - a.mvpCount;
           return b.matchesPlayed - a.matchesPlayed;
@@ -344,11 +366,11 @@
 
       function updateHallOfFame(db) {
         if (db.players.length === 0) return;
-        const mostTourney = [...db.players].sort((a,b) => b.tournamentWins - a.tournamentWins)[0];
+        const mostTourney = [...db.players].sort((a, b) => b.tournamentWins - a.tournamentWins)[0];
         db.hallOfFame.tournamentKing = mostTourney?.id || null;
-        const mostCups = [...db.players].sort((a,b) => b.cupWins - a.cupWins)[0];
+        const mostCups = [...db.players].sort((a, b) => b.cupWins - a.cupWins)[0];
         db.hallOfFame.legendaryPlayer = mostCups?.id || null;
-        const mostMvp = [...db.players].sort((a,b) => b.mvpCount - a.mvpCount)[0];
+        const mostMvp = [...db.players].sort((a, b) => b.mvpCount - a.mvpCount)[0];
         db.hallOfFame.mythicMaster = mostMvp?.id || null;
       }
 
@@ -370,18 +392,39 @@
 
       function renderPage(page) {
         const db = getDB();
-        switch(page) {
-          case 'dashboard': renderDashboard(db); break;
-          case 'players': renderPlayers(db); break;
-          case 'leaderboard': renderLeaderboard(db); break;
-          case 'match': renderMatchCenter(db); break;
-          case 'tournament': renderTournament(db); break;
-          case 'cup': renderCupCenter(db); break;
-          case 'achievements': renderAchievements(db); break;
-          case 'halloffame': renderHallOfFame(db); break;
-          case 'history': renderHistory(db); break;
-          case 'admin': renderAdmin(db); break;
-          default: renderDashboard(db);
+        switch (page) {
+          case 'dashboard':
+            renderDashboard(db);
+            break;
+          case 'players':
+            renderPlayers(db);
+            break;
+          case 'leaderboard':
+            renderLeaderboard(db);
+            break;
+          case 'match':
+            renderMatchCenter(db);
+            break;
+          case 'tournament':
+            renderTournament(db);
+            break;
+          case 'cup':
+            renderCupCenter(db);
+            break;
+          case 'achievements':
+            renderAchievements(db);
+            break;
+          case 'halloffame':
+            renderHallOfFame(db);
+            break;
+          case 'history':
+            renderHistory(db);
+            break;
+          case 'admin':
+            renderAdmin(db);
+            break;
+          default:
+            renderDashboard(db);
         }
       }
 
@@ -389,7 +432,7 @@
         const totalMatches = db.matches.length;
         const totalTournaments = db.tournaments.length;
         const totalCups = db.cups.length;
-        const sorted = [...db.players].sort((a,b) => a.currentRank - b.currentRank);
+        const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
         const topPlayer = sorted[0]?.name || '—';
         mainContent.innerHTML = `
           <div class="card">
@@ -401,6 +444,8 @@
               <div class="stat-badge">🏆 Cups<br><strong>${totalCups}</strong></div>
               <div class="stat-badge">🥇 #1 Ranked<br><strong>${topPlayer}</strong></div>
             </div>
+            ${db.activeTournament ? `<p style="margin-top:1rem;color:#d4af37;">⚠️ Active Tournament: ${db.activeTournament.name}</p>` : ''}
+            ${db.activeCup ? `<p style="margin-top:0.5rem;color:#d4af37;">⚠️ Active Cup in progress</p>` : ''}
           </div>
         `;
       }
@@ -412,7 +457,8 @@
             <strong>${p.name}</strong> (@${p.username})<br>
             Matches: ${p.matchesPlayed} | Wins: ${p.wins} | Losses: ${p.losses} | WR: ${p.winRate}%<br>
             Points: ${p.totalPoints} | MVPs: ${p.mvpCount} | Rank: #${p.currentRank}<br>
-            🏆 Tourney Wins: ${p.tournamentWins} | 🥤 Cup Wins: ${p.cupWins}
+            🏆 Tourney Wins: ${p.tournamentWins} | 🥤 Cup Wins: ${p.cupWins}<br>
+            Streak: ${p.currentWinStreak} | Best Streak: ${p.longestWinStreak}
           </div>`;
         });
         html += `</div>`;
@@ -420,9 +466,12 @@
       }
 
       function renderLeaderboard(db) {
-        const sorted = [...db.players].sort((a,b) => a.currentRank - b.currentRank);
-        let rows = sorted.map(p => `<tr><td>#${p.currentRank}</td><td>${p.name}</td><td>${p.winRate}%</td><td>${p.mvpCount}</td><td>${p.matchesPlayed}</td></tr>`).join('');
-        mainContent.innerHTML = `<div class="card"><h2>🏅 Global Leaderboard</h2><table><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th></tr>${rows}</table></div>`;
+        const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
+        let rows = sorted.map(p =>
+          `<tr><td>#${p.currentRank}</td><td>${p.name}</td><td>${p.winRate}%</td><td>${p.mvpCount}</td><td>${p.matchesPlayed}</td></tr>`
+        ).join('');
+        mainContent.innerHTML =
+          `<div class="card"><h2>🏅 Global Leaderboard</h2><table><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th></tr>${rows}</table></div>`;
       }
 
       function renderMatchCenter(db) {
@@ -451,7 +500,7 @@
             const pid = parseInt(row.querySelector('.playerSelect').value);
             const place = parseInt(row.querySelector('.placeSelect').value);
             if (!participants.includes(pid)) participants.push(pid);
-            positions.push({playerId: pid, place});
+            positions.push({ playerId: pid, place });
           });
           if (participants.length < 2) return alert('Need at least 2 players');
           const db = getDB();
@@ -463,41 +512,344 @@
         };
       }
 
+      // ==================== TOURNAMENT SYSTEM ====================
       function renderTournament(db) {
-        mainContent.innerHTML = `<div class="card"><h2>🏟️ Tournament (simplified demo)</h2><p>Create tournament and assign winner manually for stats.</p>
-          <button onclick="window.simulateTourney()">⚡ Simulate Tournament (Sankalp wins)</button></div>`;
-        window.simulateTourney = function() {
-          const db = getDB();
-          const winner = db.players.find(p => p.name === 'Sankalp') || db.players[0];
-          winner.tournamentWins += 1;
-          db.tournaments.push({name:'Pro Cup', winner:winner.id, date: new Date().toISOString()});
-          checkAchievements(db);
-          updateHallOfFame(db);
-          saveDB(db);
-          alert('Tournament recorded!');
-          renderTournament(getDB());
+        if (db.activeTournament) {
+          renderActiveTournament(db);
+        } else {
+          renderCreateTournament(db);
+        }
+      }
+
+      function renderCreateTournament(db) {
+        mainContent.innerHTML = `
+          <div class="card">
+            <h2>🏟️ Create Tournament</h2>
+            <div>
+              <label>Tournament Name:</label>
+              <input type="text" id="tourneyName" placeholder="Stumble Cup 2026" value="Stumble Championship">
+            </div>
+            <div style="margin-top:1rem;">
+              <label>How many maps per match? (5-10):</label>
+              <input type="number" id="mapsPerMatch" min="5" max="10" value="5">
+            </div>
+            <div style="margin-top:1rem;">
+              <label>How many matches in tournament? (3-10):</label>
+              <input type="number" id="totalMatches" min="3" max="10" value="3">
+            </div>
+            <div style="margin-top:1rem;">
+              <label>Select Participants:</label><br>
+              ${db.players.map(p => `
+                <label style="display:inline-block; margin:0.3rem;">
+                  <input type="checkbox" class="tourneyPlayer" value="${p.id}" checked> ${p.name}
+                </label>
+              `).join('')}
+            </div>
+            <button onclick="window.createTournament()" style="margin-top:1rem;">🏟️ Create Tournament</button>
+          </div>
+          ${db.tournaments.length > 0 ? renderTournamentHistory(db) : ''}
+        `;
+      }
+
+      function renderActiveTournament(db) {
+        const tourney = db.activeTournament;
+        const playerMap = {};
+        db.players.forEach(p => { playerMap[p.id] = p; });
+
+        let html = `
+          <div class="card">
+            <h2>🏟️ ${tourney.name}</h2>
+            <p>Maps per match: ${tourney.mapsPerMatch} | Matches: ${tourney.currentMatch}/${tourney.totalMatches}</p>
+            <h3>Current Standings</h3>
+            <table>
+              <tr><th>Player</th><th>Match Wins</th><th>Total Points</th></tr>
+        `;
+
+        tourney.standings.forEach(s => {
+          html += `<tr><td>${playerMap[s.playerId]?.name || 'Unknown'}</td><td>${s.matchWins}</td><td>${s.totalPoints}</td></tr>`;
+        });
+
+        html += `</table>`;
+
+        if (tourney.currentMatch <= tourney.totalMatches) {
+          html += `
+            <h3>Match #${tourney.currentMatch} Results</h3>
+            <div id="tourneyMatchInputs"></div>
+            <button onclick="window.addTourneyMatchRow()">+ Add Player Position</button>
+            <button onclick="window.submitTourneyMatch()">✅ Submit Match Result</button>
+             `;
+        }
+
+        if (tourney.completed) {
+          const winner = db.players.find(p => p.id === tourney.winner);
+          html += `<div style="margin-top:1rem;"><span class="winner-badge">👑 Champion: ${winner?.name}</span></div>`;
+        }
+
+        html += `</div>`;
+        mainContent.innerHTML = html;
+
+        window.addTourneyMatchRow = function() {
+          const div = document.getElementById('tourneyMatchInputs');
+          const row = document.createElement('div');
+          row.innerHTML = `
+            <select class="tPlayerSelect">
+              ${tourney.participants.map(pid => `<option value="${pid}">${playerMap[pid]?.name}</option>`).join('')}
+            </select>
+            <select class="tPlaceSelect">
+              <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+              <option value="4">4th</option><option value="5">5th</option>
+            </select>`;
+          div.appendChild(row);
         };
       }
 
-      function renderCupCenter(db) {
-        mainContent.innerHTML = `<div class="card"><h2>🏆 Cup Center</h2><button onclick="window.simulateCup()">🥇 Simulate Cup Win (Akshat)</button></div>`;
-        window.simulateCup = function() {
-          const db = getDB();
-          const winner = db.players.find(p => p.name === 'Akshat Rakesh') || db.players[0];
-          winner.cupWins += 1;
-          db.cups.push({type:'League', winner:winner.id, date: new Date().toISOString()});
+      window.createTournament = function() {
+        const db = getDB();
+        const name = document.getElementById('tourneyName').value || 'Tournament';
+        const mapsPerMatch = parseInt(document.getElementById('mapsPerMatch').value) || 5;
+        const totalMatches = parseInt(document.getElementById('totalMatches').value) || 3;
+
+        const participants = [];
+        document.querySelectorAll('.tourneyPlayer:checked').forEach(cb => {
+          participants.push(parseInt(cb.value));
+        });
+
+        if (participants.length < 2) return alert('Select at least 2 players');
+
+        const standings = participants.map(pid => ({
+          playerId: pid,
+          matchWins: 0,
+          totalPoints: 0
+        }));
+
+        db.activeTournament = {
+          name,
+          mapsPerMatch,
+          totalMatches,
+          participants,
+          standings,
+          currentMatch: 1,
+          completed: false,
+          winner: null
+        };
+
+        saveDB(db);
+        renderTournament(getDB());
+      };
+
+      window.submitTourneyMatch = function() {
+        const db = getDB();
+        if (!db.activeTournament) return;
+        const tourney = db.activeTournament;
+
+        const rows = document.querySelectorAll('#tourneyMatchInputs div');
+        const positions = [];
+        const participants = [];
+
+        rows.forEach(row => {
+          const pid = parseInt(row.querySelector('.tPlayerSelect').value);
+          const place = parseInt(row.querySelector('.tPlaceSelect').value);
+          if (!participants.includes(pid)) participants.push(pid);
+          positions.push({ playerId: pid, place });
+        });
+
+        if (participants.length < 2) return alert('Need at least 2 players');
+
+        // Record match stats globally
+        updatePlayerStatsAfterMatch({ participants, positions });
+
+        // Update tournament standings
+        const firstPlace = positions.find(p => p.place === 1);
+        if (firstPlace) {
+          const standing = tourney.standings.find(s => s.playerId === firstPlace.playerId);
+          if (standing) standing.matchWins += 1;
+        }
+
+        const pointsMap = { 1: 18, 2: 15, 3: 13, 4: 12, 5: 11 };
+        positions.forEach(entry => {
+          const standing = tourney.standings.find(s => s.playerId === entry.playerId);
+          if (standing) standing.totalPoints += (pointsMap[entry.place] || 0);
+        });
+
+        tourney.currentMatch += 1;
+
+        // Check if tournament complete
+        if (tourney.currentMatch > tourney.totalMatches) {
+          tourney.completed = true;
+          // Find winner (most match wins)
+          const sorted = [...tourney.standings].sort((a, b) => b.matchWins - a.matchWins);
+          tourney.winner = sorted[0].playerId;
+
+          // Award tournament win
+          const winner = db.players.find(p => p.id === tourney.winner);
+          if (winner) winner.tournamentWins += 1;
+
+          // Save to history
+          db.tournaments.push({
+            name: tourney.name,
+            winner: tourney.winner,
+            date: new Date().toISOString(),
+            standings: tourney.standings
+          });
+
+          db.activeTournament = null;
           checkAchievements(db);
           updateHallOfFame(db);
-          saveDB(db);
-          alert('Cup win added!');
-          renderCupCenter(getDB());
+        }
+
+        saveDB(db);
+        renderTournament(getDB());
+      };
+
+      function renderTournamentHistory(db) {
+        let html = '<div class="card"><h3>📜 Tournament History</h3>';
+        db.tournaments.slice().reverse().forEach(t => {
+          const winner = db.players.find(p => p.id === t.winner);
+          html +=
+            `<p>🏆 ${t.name} - Champion: ${winner?.name} (${new Date(t.date).toLocaleDateString()})</p>`;
+        });
+        html += '</div>';
+        return html;
+      }
+
+      // ==================== CUP SYSTEM ====================
+      function renderCupCenter(db) {
+        if (db.activeCup) {
+          renderActiveCup(db);
+        } else {
+          renderCreateCup(db);
+        }
+      }
+
+      function renderCreateCup(db) {
+        mainContent.innerHTML = `
+          <div class="card">
+            <h2>🏆 Cup Center</h2>
+            <p><strong>Cup Format:</strong> Single match with 10 maps</p>
+            <div style="margin-top:1rem;">
+              <label>Select Participants:</label><br>
+              ${db.players.map(p => `
+                <label style="display:inline-block; margin:0.3rem;">
+                  <input type="checkbox" class="cupPlayer" value="${p.id}" checked> ${p.name}
+                </label>
+              `).join('')}
+            </div>
+            <button onclick="window.createCup()" style="margin-top:1rem;">🏆 Create Cup Match</button>
+          </div>
+          ${db.cups.length > 0 ? renderCupHistory(db) : ''}
+        `;
+      }
+
+      function renderActiveCup(db) {
+        const cup = db.activeCup;
+        const playerMap = {};
+        db.players.forEach(p => { playerMap[p.id] = p; });
+
+        let html = `
+          <div class="card">
+            <h2>🏆 Cup Match (10 Maps)</h2>
+            <p>Format: Single elimination match | Maps: 10</p>
+            <div id="cupMatchInputs"></div>
+            <button onclick="window.addCupMatchRow()">+ Add Player Position</button>
+            <button onclick="window.submitCupMatch()">🏁 Submit Cup Result</button>
+          </div>
+        `;
+
+        mainContent.innerHTML = html;
+
+        window.addCupMatchRow = function() {
+          const div = document.getElementById('cupMatchInputs');
+          const row = document.createElement('div');
+          row.innerHTML = `
+            <select class="cPlayerSelect">
+              ${cup.participants.map(pid => `<option value="${pid}">${playerMap[pid]?.name}</option>`).join('')}
+            </select>
+            <select class="cPlaceSelect">
+              <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+              <option value="4">4th</option><option value="5">5th</option>
+            </select>`;
+          div.appendChild(row);
         };
+      }
+
+      window.createCup = function() {
+        const db = getDB();
+        const participants = [];
+        document.querySelectorAll('.cupPlayer:checked').forEach(cb => {
+          participants.push(parseInt(cb.value));
+        });
+
+        if (participants.length < 2) return alert('Select at least 2 players');
+
+        db.activeCup = {
+          participants,
+          maps: 10,
+          completed: false,
+          winner: null
+        };
+
+        saveDB(db);
+        renderCupCenter(getDB());
+      };
+       window.submitCupMatch = function() {
+        const db = getDB();
+        if (!db.activeCup) return;
+        const cup = db.activeCup;
+
+        const rows = document.querySelectorAll('#cupMatchInputs div');
+        const positions = [];
+        const participants = [];
+
+        rows.forEach(row => {
+          const pid = parseInt(row.querySelector('.cPlayerSelect').value);
+          const place = parseInt(row.querySelector('.cPlaceSelect').value);
+          if (!participants.includes(pid)) participants.push(pid);
+          positions.push({ playerId: pid, place });
+        });
+
+        if (participants.length < 2) return alert('Need at least 2 players');
+
+        // Record globally
+        updatePlayerStatsAfterMatch({ participants, positions });
+
+        // Cup winner is 1st place
+        const firstPlace = positions.find(p => p.place === 1);
+        if (firstPlace) {
+          const winner = db.players.find(p => p.id === firstPlace.playerId);
+          if (winner) winner.cupWins += 1;
+          cup.winner = firstPlace.playerId;
+        }
+
+        cup.completed = true;
+        db.cups.push({
+          type: 'League Cup',
+          winner: cup.winner,
+          date: new Date().toISOString()
+        });
+
+        db.activeCup = null;
+        checkAchievements(db);
+        updateHallOfFame(db);
+        saveDB(db);
+        renderCupCenter(getDB());
+      };
+
+      function renderCupHistory(db) {
+        let html = '<div class="card"><h3>📜 Cup History</h3>';
+        db.cups.slice().reverse().forEach(c => {
+          const winner = db.players.find(p => p.id === c.winner);
+          html +=
+          `<p>🥤 ${c.type} - Winner: ${winner?.name} (${new Date(c.date).toLocaleDateString()})</p>`;
+        });
+        html += '</div>';
+        return html;
       }
 
       function renderAchievements(db) {
         let html = '<div class="card"><h2>🌟 Achievements</h2>';
         db.players.forEach(p => {
-          html += `<strong>${p.name}</strong>: ${p.achievements.length ? p.achievements.join(', ') : 'None'}<br>`;
+          html +=
+            `<p><strong>${p.name}</strong>: ${p.achievements.length ? p.achievements.map(a => '🏅 ' + a).join(', ') : 'No achievements yet'}</p>`;
         });
         html += '</div>';
         mainContent.innerHTML = html;
@@ -505,30 +857,34 @@
 
       function renderHallOfFame(db) {
         const hof = db.hallOfFame;
-        const getName = (id) => db.players.find(p=>p.id===id)?.name || '—';
+        const getName = (id) => db.players.find(p => p.id === id)?.name || '—';
         mainContent.innerHTML = `<div class="card"><h2>🏛️ Hall Of Fame</h2>
           <p>🏆 Tournament King: ${getName(hof.tournamentKing)}</p>
-          <p>🌟 Legendary Player: ${getName(hof.legendaryPlayer)}</p>
+          <p>🌟 Legendary Player (Cups): ${getName(hof.legendaryPlayer)}</p>
           <p>⚡ Mythic Master (MVP): ${getName(hof.mythicMaster)}</p></div>`;
       }
 
       function renderHistory(db) {
         let html = '<div class="card"><h2>📜 Recent Matches</h2>';
-        db.matches.slice(-8).reverse().forEach(m => html += `<p>${new Date(m.date).toLocaleDateString()} - players: ${m.participants.length}</p>`);
+        db.matches.slice(-10).reverse().forEach(m => {
+          html +=
+            `<p>📅 ${new Date(m.date).toLocaleDateString()} - ${m.participants.length} players - 1st: Player #${m.positions.find(p=>p.place===1)?.playerId}</p>`;
+        });
         html += '</div>';
         mainContent.innerHTML = html;
       }
 
       function renderAdmin(db) {
         mainContent.innerHTML = `<div class="card"><h2>🔧 Admin Tools</h2>
-          <button onclick="window.exportDB()">📤 Export JSON</button>
-          <input type="file" id="importFile" accept=".json"><button onclick="window.importDB()">📥 Import</button>
+          <button onclick="window.exportDB()">📤 Export JSON Backup</button>
+          <input type="file" id="importFile" accept=".json"><button onclick="window.importDB()">📥 Import Backup</button>
           <button onclick="window.undoLastMatch()">↩️ Undo Last Match</button>
           <button onclick="window.resetData()">⚠️ Reset All Data</button></div>`;
         window.exportDB = () => {
           const a = document.createElement('a');
-          a.href = URL.createObjectURL(new Blob([JSON.stringify(getDB())], {type:'application/json'}));
-          a.download = 'stumble_backup.json'; a.click();
+          a.href = URL.createObjectURL(new Blob([JSON.stringify(getDB())], { type: 'application/json' }));
+          a.download = 'stumble_backup.json';
+          a.click();
         };
         window.importDB = () => {
           const fileInput = document.getElementById('importFile');
@@ -537,24 +893,31 @@
           const reader = new FileReader();
           reader.onload = (e) => {
             localStorage.setItem(STORAGE_KEY, e.target.result);
-            alert('Imported!'); location.reload();
+            alert('Imported!');
+            location.reload();
           };
           reader.readAsText(file);
         };
         window.undoLastMatch = () => {
           const db = getDB();
-          if (db.matches.length===0) return alert('No matches');
-          db.matches.pop(); saveDB(db); alert('Last match removed (partial rollback)'); location.reload();
+          if (db.matches.length === 0) return alert('No matches to undo');
+          db.matches.pop();
+          saveDB(db);
+          alert('Last match removed (partial rollback - full stats recalculation needed)');
+          location.reload();
         };
         window.resetData = () => {
-          if(confirm('Delete all data?')) { localStorage.removeItem(STORAGE_KEY); initializeDB(); location.reload(); }
+          if (confirm('Delete ALL data permanently?')) {
+            localStorage.removeItem(STORAGE_KEY);
+            initializeDB();
+            location.reload();
+          }
         };
       }
 
-      // initial render
+      // Initial render
       renderPage('dashboard');
     })();
   </script>
 </body>
 </html>
-
