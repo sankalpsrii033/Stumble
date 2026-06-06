@@ -21,7 +21,7 @@
     button:hover{background:#e8c550}
     button.unlock-btn{background:#2a3040;color:#d4af37;border:1px solid #d4af37}
     button.unlock-btn:hover{background:#d4af37;color:#000}
-    select,input{background:#0a0e14;border:1px solid #2a3040;color:#fff;padding:.5rem;border-radius:6px;margin:.2rem}
+    select,input{background:#0a0e14;border:1px solid #2a3040;color:#fff;padding:.5rem;border-radius:6rem;margin:.2rem}
     table{width:100%;border-collapse:collapse;margin:1rem 0}
     th{text-align:left;color:#d4af37;padding:.7rem;border-bottom:2px solid #d4af37}
     td{padding:.7rem;border-bottom:1px solid #1a2030}
@@ -30,6 +30,11 @@
     .badge{background:#d4af37;color:#000;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.85rem}
     .locked-badge{background:#c44;color:#fff;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.75rem}
     .unlocked-badge{background:#4c4;color:#fff;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.75rem}
+    .hof-card{background:linear-gradient(135deg,#1a1f2e,#0d1117);border:2px solid #d4af37;border-radius:16px;padding:1.5rem;margin:1rem 0;text-align:center}
+    .hof-title{font-size:1.1rem;color:#888;margin-bottom:.5rem}
+    .hof-name{font-size:1.8rem;font-weight:800;color:#d4af37;margin:.5rem 0}
+    .hof-icon{font-size:3rem;margin:.5rem 0}
+    .hof-stat{font-size:1rem;color:#e0b040}
     #passwordModal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:1000}
     .modal-box{background:#11161e;border:2px solid #d4af37;border-radius:16px;padding:2rem;text-align:center;min-width:350px}
     .modal-box input{width:100%;margin:1rem 0;font-size:1.1rem;text-align:center}
@@ -69,7 +74,7 @@
 
 <script>
 // ============ PASSWORD SYSTEM ============
-const ADMIN_PASSWORD = "stumble2026"; // CHANGE THIS PASSWORD
+const ADMIN_PASSWORD = "stumble2026";
 let isUnlocked = false;
 
 function toggleLock(){
@@ -131,7 +136,7 @@ function isAdminAllowed(){
 }
 
 // ============ DATABASE ============
-const K='slm_v4';
+const K='slm_v5';
 if(!localStorage.getItem(K))localStorage.setItem(K,JSON.stringify({
   p:[
     {id:1,n:"Sankalp",u:"sankalp_op",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
@@ -139,27 +144,68 @@ if(!localStorage.getItem(K))localStorage.setItem(K,JSON.stringify({
     {id:3,n:"Atharva Mishra",u:"panditdabang",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
     {id:4,n:"Nayan Mehrotra",u:"nbot",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
     {id:5,n:"Yugank Dwivedi",u:"yuggu",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]}
-  ],t:[],c:[],at:null,ac:null,hof:{tk:null,lp:null,mm:null}
+  ],t:[],c:[],at:null,ac:null,hof:{goat:null,sp:null,lg:null,mm:null}
 }));
 
 function g(){return JSON.parse(localStorage.getItem(K))}
 function s(d){localStorage.setItem(K,JSON.stringify(d))}
 
+// ============ UPDATE HALL OF FAME ============
+function updateHallOfFame(db){
+  if(db.p.length === 0) return;
+  
+  // GOAT - Highest Win Rate
+  let goat = [...db.p].sort((a,b) => {
+    if(b.wr !== a.wr) return b.wr - a.wr;
+    return b.mp - a.mp;
+  })[0];
+  db.hof.goat = goat ? goat.id : null;
+  
+  // Stumble Pro - Most Tournament Wins
+  let sp = [...db.p].sort((a,b) => {
+    if(b.tw !== a.tw) return b.tw - a.tw;
+    return b.mp - a.mp;
+  })[0];
+  db.hof.sp = sp ? sp.id : null;
+  
+  // Legendary Guy - Most Cup Wins
+  let lg = [...db.p].sort((a,b) => {
+    if(b.cw !== a.cw) return b.cw - a.cw;
+    return b.mp - a.mp;
+  })[0];
+  db.hof.lg = lg ? lg.id : null;
+  
+  // Mythic Man - Highest MVP
+  let mm = [...db.p].sort((a,b) => {
+    if(b.mvp !== a.mvp) return b.mvp - a.mvp;
+    return b.mp - a.mp;
+  })[0];
+  db.hof.mm = mm ? mm.id : null;
+}
+
 function updateStats(pos){
   let db=g();
   let pts={1:18,2:15,3:13,4:12,5:11};
   let ids=[...new Set(pos.map(x=>x.pid))];
+  
   ids.forEach(id=>{let p=db.p.find(x=>x.id===id);if(p)p.mp+=1;});
+  
   let w=pos.find(x=>x.place===1);
   if(w){let wp=db.p.find(x=>x.id===w.pid);if(wp){wp.w+=1;wp.mvp+=1;wp.st+=1;if(wp.st>wp.bs)wp.bs=wp.st;}}
+  
   pos.forEach(e=>{
     let p=db.p.find(x=>x.id===e.pid);if(!p)return;
     p.pts+=(pts[e.place]||0);
     if(e.place!==1){p.l+=1;p.st=0;}
   });
+  
   db.p.forEach(p=>{p.wr=p.mp>0?parseFloat(((p.w/p.mp)*100).toFixed(1)):0;});
+  
+  // Update rankings
   let srt=[...db.p].sort((a,b)=>b.wr-a.wr||b.mvp-a.mvp||b.mp-a.mp);
   srt.forEach((p,i)=>{p.rk=i+1;if(!p.hr||p.rk<p.hr)p.hr=p.rk;});
+  
+  // Update achievements
   db.p.forEach(p=>{
     if(p.tw>=1&&!p.ach.includes('t1'))p.ach.push('t1');
     if(p.tw>=5&&!p.ach.includes('t5'))p.ach.push('t5');
@@ -170,7 +216,10 @@ function updateStats(pos){
     if(p.mvp>=25&&!p.ach.includes('m25'))p.ach.push('m25');
     if(p.mvp>=50&&!p.ach.includes('m50'))p.ach.push('m50');
   });
-  if(db.p.length){db.hof.tk=[...db.p].sort((a,b)=>b.tw-a.tw)[0].id;db.hof.lp=[...db.p].sort((a,b)=>b.cw-a.cw)[0].id;db.hof.mm=[...db.p].sort((a,b)=>b.mvp-a.mvp)[0].id;}
+  
+  // UPDATE HALL OF FAME
+  updateHallOfFame(db);
+  
   s(db);
 }
 
@@ -267,7 +316,7 @@ function activeT(db){
   [...t.st].sort((a,b)=>b.mw-a.mw).forEach(s=>{h+=`<tr><td>${nm[s.pid]}</td><td><b>${s.mw}</b></td><td>${s.tp}</td></tr>`;});
   h+='</table>';
   if(!t.done){
-    h+=`<h3>Match #${t.cm}</h3><p style="color:#d4af37">⚠️ Updates leaderboard!</p><div id="tmc"></div>
+    h+=`<h3>Match #${t.cm}</h3><p style="color:#d4af37">⚠️ Updates leaderboard & Hall of Fame!</p><div id="tmc"></div>
       <button onclick="addTR()">+ Player</button><button onclick="subTM()">✅ Submit</button>`;
   }else{
     h+=`<p style="font-size:1.3rem;color:#d4af37">👑 Champion: ${nm[t.winner]}</p><button onclick="finT()">Save</button>`;
@@ -303,7 +352,7 @@ window.subTM=()=>{
   t.mc++;t.cm++;
   if(t.cm>t.tm){t.done=true;t.winner=[...t.st].sort((a,b)=>b.mw-a.mw)[0].pid;}
   s(db);
-  alert('✅ Match recorded! Check leaderboard.');
+  alert('✅ Match recorded! Hall of Fame updated.');
   tour(g());
 };
 
@@ -315,7 +364,10 @@ window.finT=()=>{
   if(wp)wp.tw++;
   db.t.push({name:t.name,winner:t.winner,date:new Date().toISOString(),mc:t.mc});
   db.at=null;
-  s(db);tour(g());
+  updateHallOfFame(db);
+  s(db);
+  alert('🏆 Tournament saved! Hall of Fame updated.');
+  tour(g());
 };
 
 function thist(db){
@@ -366,8 +418,9 @@ window.subCup=()=>{
   if(w){let wp=db.p.find(p=>p.id===w.pid);if(wp)wp.cw++;}
   db.c.push({type:'League Cup (10 Maps)',winner:w?.pid,date:new Date().toISOString()});
   db.ac=null;
+  updateHallOfFame(db);
   s(db);
-  alert('✅ Cup done! Check leaderboard.');
+  alert('✅ Cup done! Hall of Fame updated.');
   cup(g());
 };
 
@@ -377,12 +430,54 @@ function chist(db){
   return h+'</div>';
 }
 
+// HALL OF FAME - FIXED
 function hall(db){
-  let n=id=>db.p.find(p=>p.id===id)?.n||'—';
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏛️ Hall of Fame</h2>
-    <div class="stat-box"><h3>🏆 Tournament King</h3><p style="font-size:1.3rem"><b>${n(db.hof.tk)}</b></p></div>
-    <div class="stat-box"><h3>🌟 Legendary Player</h3><p style="font-size:1.3rem"><b>${n(db.hof.lp)}</b></p></div>
-    <div class="stat-box"><h3>⚡ Mythic Master</h3><p style="font-size:1.3rem"><b>${n(db.hof.mm)}</b></p></div></div>`;
+  let n=id=>{
+    let p=db.p.find(x=>x.id===id);
+    return p?p.n:'—';
+  };
+  
+  let goat=db.p.find(x=>x.id===db.hof.goat);
+  let sp=db.p.find(x=>x.id===db.hof.sp);
+  let lg=db.p.find(x=>x.id===db.hof.lg);
+  let mm=db.p.find(x=>x.id===db.hof.mm);
+  
+  document.getElementById('main').innerHTML=`
+    <div class="card">
+      <h2>🏛️ Hall of Fame</h2>
+      
+      <div class="hof-card">
+        <div class="hof-icon">🐐</div>
+        <div class="hof-title">GOAT - Highest Win Rate</div>
+        <div class="hof-name">${goat?goat.n:'—'}</div>
+        <div class="hof-stat">Win Rate: ${goat?goat.wr+'%':'—'}</div>
+        ${goat?`<div style="color:#888;font-size:.9rem">Wins: ${goat.w} | Matches: ${goat.mp}</div>`:''}
+      </div>
+      
+      <div class="hof-card">
+        <div class="hof-icon">🏆</div>
+        <div class="hof-title">Stumble Pro - Most Tournament Wins</div>
+        <div class="hof-name">${sp?sp.n:'—'}</div>
+        <div class="hof-stat">Tournament Wins: ${sp?sp.tw:'—'}</div>
+        ${sp?`<div style="color:#888;font-size:.9rem">Total Matches: ${sp.mp}</div>`:''}
+      </div>
+      
+      <div class="hof-card">
+        <div class="hof-icon">🌟</div>
+        <div class="hof-title">Legendary Guy - Most Cup Wins</div>
+        <div class="hof-name">${lg?lg.n:'—'}</div>
+        <div class="hof-stat">Cup Wins: ${lg?lg.cw:'—'}</div>
+        ${lg?`<div style="color:#888;font-size:.9rem">Total Matches: ${lg.mp}</div>`:''}
+      </div>
+      
+      <div class="hof-card">
+        <div class="hof-icon">⚡</div>
+        <div class="hof-title">Mythic Man - Highest MVP</div>
+        <div class="hof-name">${mm?mm.n:'—'}</div>
+        <div class="hof-stat">MVP Count: ${mm?mm.mvp:'—'}</div>
+        ${mm?`<div style="color:#888;font-size:.9rem">Win Rate: ${mm.wr}%</div>`:''}
+      </div>
+    </div>`;
 }
 
 function hist(db){
@@ -408,6 +503,11 @@ function adm(db){
     if(np&&np.length>=4){ADMIN_PASSWORD=np;alert('✅ Password changed to: '+np);}else{alert('Password too short!');}
   };
 }
+
+// Initialize Hall of Fame on first load
+let initDB = g();
+updateHallOfFame(initDB);
+s(initDB);
 
 render('dashboard');
 </script>
