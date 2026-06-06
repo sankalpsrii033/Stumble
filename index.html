@@ -183,24 +183,18 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .tournament-match {
-      background: rgba(212, 175, 55, 0.05);
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 0.8rem 0;
-    }
-
     .winner-badge {
       background: linear-gradient(135deg, #d4af37, #f5cb5c);
       color: #0a0c14;
       padding: 0.4rem 1rem;
       border-radius: 20px;
       font-weight: bold;
+      display: inline-block;
     }
 
-    .match-completed {
-      border-left: 4px solid #4caf50;
+    .leaderboard-gold {
+      color: #f5cb5c;
+      font-weight: bold;
     }
 
     @media (max-width: 800px) {
@@ -293,17 +287,19 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
       }
 
-      // ---------- HELPERS ----------
+      // ---------- CORE STATS ENGINE ----------
       function updatePlayerStatsAfterMatch(matchData) {
         const db = getDB();
         const { participants, positions } = matchData;
 
+        // Update matches played for all participants
         participants.forEach(pid => {
           const player = db.players.find(p => p.id === pid);
           if (!player) return;
           player.matchesPlayed += 1;
         });
 
+        // Find 1st place and award win + MVP
         const firstPlaceEntry = positions.find(p => p.place === 1);
         if (firstPlaceEntry) {
           const winner = db.players.find(p => p.id === firstPlaceEntry.playerId);
@@ -317,6 +313,7 @@
           }
         }
 
+        // Update all positions
         positions.forEach(entry => {
           const player = db.players.find(p => p.id === entry.playerId);
           if (!player) return;
@@ -328,23 +325,40 @@
           player.totalPoints += (pointsMap[entry.place] || 0);
         });
 
+        // Recalculate all win rates
         db.players.forEach(p => {
           p.winRate = p.matchesPlayed > 0 ? ((p.wins / p.matchesPlayed) * 100).toFixed(1) : 0;
         });
 
-        const sorted = [...db.players].sort((a, b) => {
-          if (b.winRate !== a.winRate) return b.winRate - a.winRate;
-          if (b.mvpCount !== a.mvpCount) return b.mvpCount - a.mvpCount;
-          return b.matchesPlayed - a.matchesPlayed;
-        });
-        sorted.forEach((p, idx) => {
-          p.currentRank = idx + 1;
-          if (!p.highestRank || p.currentRank < p.highestRank) p.highestRank = p.currentRank;
-        });
-
+        // Update rankings based on ALL matches (including tournament & cup)
+        updateGlobalRankings(db);
+        
         checkAchievements(db);
         updateHallOfFame(db);
         saveDB(db);
+      }
+
+      function updateGlobalRankings(db) {
+        // Rank based on: Win Rate > MVP Count > Total Matches Played
+        const sorted = [...db.players].sort((a, b) => {
+          // Primary: Win Rate (highest first)
+          const winRateA = parseFloat(a.winRate) || 0;
+          const winRateB = parseFloat(b.winRate) || 0;
+          if (winRateB !== winRateA) return winRateB - winRateA;
+          
+          // Secondary: MVP Count
+          if (b.mvpCount !== a.mvpCount) return b.mvpCount - a.mvpCount;
+          
+          // Tertiary: Total Matches Played
+          return b.matchesPlayed - a.matchesPlayed;
+        });
+        
+        sorted.forEach((p, idx) => {
+          p.currentRank = idx + 1;
+          if (!p.highestRank || p.currentRank < p.highestRank) {
+            p.highestRank = p.currentRank;
+          }
+        });
       }
 
       function checkAchievements(db) {
@@ -393,38 +407,17 @@
       function renderPage(page) {
         const db = getDB();
         switch (page) {
-          case 'dashboard':
-            renderDashboard(db);
-            break;
-          case 'players':
-            renderPlayers(db);
-            break;
-          case 'leaderboard':
-            renderLeaderboard(db);
-            break;
-          case 'match':
-            renderMatchCenter(db);
-            break;
-          case 'tournament':
-            renderTournament(db);
-            break;
-          case 'cup':
-            renderCupCenter(db);
-            break;
-          case 'achievements':
-            renderAchievements(db);
-            break;
-          case 'halloffame':
-            renderHallOfFame(db);
-            break;
-          case 'history':
-            renderHistory(db);
-            break;
-          case 'admin':
-            renderAdmin(db);
-            break;
-          default:
-            renderDashboard(db);
+          case 'dashboard': renderDashboard(db); break;
+          case 'players': renderPlayers(db); break;
+          case 'leaderboard': renderLeaderboard(db); break;
+          case 'match': renderMatchCenter(db); break;
+          case 'tournament': renderTournament(db); break;
+          case 'cup': renderCupCenter(db); break;
+          case 'achievements': renderAchievements(db); break;
+          case 'halloffame': renderHallOfFame(db); break;
+          case 'history': renderHistory(db); break;
+          case 'admin': renderAdmin(db); break;
+          default: renderDashboard(db);
         }
       }
 
@@ -434,12 +427,18 @@
         const totalCups = db.cups.length;
         const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
         const topPlayer = sorted[0]?.name || '—';
+        
+        // Count all matches including tournament and cup
+        const allMatchesCount = db.matches.length + 
+          db.tournaments.reduce((sum, t) => sum + (t.standings?.[0]?.matchWins || 0), 0) +
+          db.cups.length;
+        
         mainContent.innerHTML = `
           <div class="card">
             <h2>🔥 DASHBOARD</h2>
             <div class="grid">
               <div class="stat-badge">👥 Players<br><strong>${db.players.length}</strong></div>
-              <div class="stat-badge">⚔️ Matches<br><strong>${totalMatches}</strong></div>
+              <div class="stat-badge">⚔️ All Matches<br><strong>${allMatchesCount}</strong></div>
               <div class="stat-badge">🏟️ Tournaments<br><strong>${totalTournaments}</strong></div>
               <div class="stat-badge">🏆 Cups<br><strong>${totalCups}</strong></div>
               <div class="stat-badge">🥇 #1 Ranked<br><strong>${topPlayer}</strong></div>
@@ -452,13 +451,15 @@
 
       function renderPlayers(db) {
         let html = `<div class="card"><h2>👥 Player Profiles</h2>`;
-        db.players.forEach(p => {
+        const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
+        sorted.forEach(p => {
           html += `<div style="margin-bottom:1rem; padding:1rem; background:rgba(255,215,0,0.05); border-radius:16px;">
-            <strong>${p.name}</strong> (@${p.username})<br>
+            <strong>${p.name}</strong> (@${p.username}) 
+            <span class="leaderboard-gold">#${p.currentRank}</span><br>
             Matches: ${p.matchesPlayed} | Wins: ${p.wins} | Losses: ${p.losses} | WR: ${p.winRate}%<br>
-            Points: ${p.totalPoints} | MVPs: ${p.mvpCount} | Rank: #${p.currentRank}<br>
+            Points: ${p.totalPoints} | MVPs: ${p.mvpCount}<br>
             🏆 Tourney Wins: ${p.tournamentWins} | 🥤 Cup Wins: ${p.cupWins}<br>
-            Streak: ${p.currentWinStreak} | Best Streak: ${p.longestWinStreak}
+            Streak: ${p.currentWinStreak} | Best Streak: ${p.longestWinStreak} | Highest Rank: #${p.highestRank}
           </div>`;
         });
         html += `</div>`;
@@ -466,18 +467,47 @@
       }
 
       function renderLeaderboard(db) {
+        // Leaderboard now reflects ALL matches (single, tournament, and cup)
         const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
-        let rows = sorted.map(p =>
-          `<tr><td>#${p.currentRank}</td><td>${p.name}</td><td>${p.winRate}%</td><td>${p.mvpCount}</td><td>${p.matchesPlayed}</td></tr>`
-        ).join('');
-        mainContent.innerHTML =
-          `<div class="card"><h2>🏅 Global Leaderboard</h2><table><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th></tr>${rows}</table></div>`;
+        let rows = sorted.map((p, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+          return `<tr>
+            <td>${medal} #${p.currentRank}</td>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.winRate}%</td>
+            <td>${p.mvpCount}</td>
+            <td>${p.matchesPlayed}</td>
+            <td>${p.totalPoints}</td>
+            <td>${p.tournamentWins} / ${p.cupWins}</td>
+          </tr>`;
+        }).join('');
+        
+        mainContent.innerHTML = `
+          <div class="card">
+            <h2>🏅 Global Leaderboard</h2>
+            <p style="color:#d4af37; margin-bottom:1rem;">📊 Ranking based on ALL matches (Win Rate > MVP > Matches Played)</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Win Rate</th>
+                  <th>MVP</th>
+                  <th>Matches</th>
+                  <th>Points</th>
+                  <th>🏆/🥤</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
       }
 
       function renderMatchCenter(db) {
         const playerOptions = db.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
         mainContent.innerHTML = `
-          <div class="card"><h2>⚡ Record Match</h2>
+          <div class="card"><h2>⚡ Record Single Match</h2>
             <p>Select participants & positions (1st gets MVP)</p>
             <div id="matchParticipants"></div>
             <button onclick="window.addMatchRow()">+ Add Player</button>
@@ -504,10 +534,15 @@
           });
           if (participants.length < 2) return alert('Need at least 2 players');
           const db = getDB();
-          db.matches.push({ date: new Date().toISOString(), participants, positions });
+          db.matches.push({ 
+            date: new Date().toISOString(), 
+            type: 'single',
+            participants, 
+            positions 
+          });
           saveDB(db);
           updatePlayerStatsAfterMatch({ participants, positions });
-          alert('Match recorded!');
+          alert('Match recorded! Leaderboard updated.');
           renderMatchCenter(getDB());
         };
       }
@@ -547,7 +582,7 @@
             </div>
             <button onclick="window.createTournament()" style="margin-top:1rem;">🏟️ Create Tournament</button>
           </div>
-          ${db.tournaments.length > 0 ? renderTournamentHistory(db) : ''}
+          ${renderTournamentHistory(db)}
         `;
       }
 
@@ -559,13 +594,19 @@
         let html = `
           <div class="card">
             <h2>🏟️ ${tourney.name}</h2>
-            <p>Maps per match: ${tourney.mapsPerMatch} | Matches: ${tourney.currentMatch}/${tourney.totalMatches}</p>
+            <p>Maps per match: ${tourney.mapsPerMatch} | Match: ${tourney.currentMatch}/${tourney.totalMatches}</p>
             <h3>Current Standings</h3>
             <table>
               <tr><th>Player</th><th>Match Wins</th><th>Total Points</th></tr>
         `;
 
-        tourney.standings.forEach(s => {
+        // Sort standings by match wins then total points
+        const sortedStandings = [...tourney.standings].sort((a, b) => {
+          if (b.matchWins !== a.matchWins) return b.matchWins - a.matchWins;
+          return b.totalPoints - a.totalPoints;
+        });
+
+        sortedStandings.forEach(s => {
           html += `<tr><td>${playerMap[s.playerId]?.name || 'Unknown'}</td><td>${s.matchWins}</td><td>${s.totalPoints}</td></tr>`;
         });
 
@@ -577,12 +618,13 @@
             <div id="tourneyMatchInputs"></div>
             <button onclick="window.addTourneyMatchRow()">+ Add Player Position</button>
             <button onclick="window.submitTourneyMatch()">✅ Submit Match Result</button>
-             `;
+          `;
         }
 
         if (tourney.completed) {
           const winner = db.players.find(p => p.id === tourney.winner);
           html += `<div style="margin-top:1rem;"><span class="winner-badge">👑 Champion: ${winner?.name}</span></div>`;
+          html += `<button onclick="window.finishTournament()" style="margin-top:1rem;">🏁 Close Tournament</button>`;
         }
 
         html += `</div>`;
@@ -655,7 +697,7 @@
 
         if (participants.length < 2) return alert('Need at least 2 players');
 
-        // Record match stats globally
+        // Update global stats - THIS AFFECTS LEADERBOARD
         updatePlayerStatsAfterMatch({ participants, positions });
 
         // Update tournament standings
@@ -679,34 +721,42 @@
           // Find winner (most match wins)
           const sorted = [...tourney.standings].sort((a, b) => b.matchWins - a.matchWins);
           tourney.winner = sorted[0].playerId;
-
-          // Award tournament win
-          const winner = db.players.find(p => p.id === tourney.winner);
-          if (winner) winner.tournamentWins += 1;
-
-          // Save to history
-          db.tournaments.push({
-            name: tourney.name,
-            winner: tourney.winner,
-            date: new Date().toISOString(),
-            standings: tourney.standings
-          });
-
-          db.activeTournament = null;
-          checkAchievements(db);
-          updateHallOfFame(db);
         }
 
         saveDB(db);
         renderTournament(getDB());
       };
 
+      window.finishTournament = function() {
+        const db = getDB();
+        if (!db.activeTournament?.completed) return;
+        
+        // Award tournament win to champion
+        const winner = db.players.find(p => p.id === db.activeTournament.winner);
+        if (winner) winner.tournamentWins += 1;
+
+        // Save to history
+        db.tournaments.push({
+          name: db.activeTournament.name,
+          winner: db.activeTournament.winner,
+          date: new Date().toISOString(),
+          standings: db.activeTournament.standings
+        });
+
+        db.activeTournament = null;
+        checkAchievements(db);
+        updateHallOfFame(db);
+        updateGlobalRankings(db);
+        saveDB(db);
+        renderTournament(getDB());
+      };
+
       function renderTournamentHistory(db) {
+        if (db.tournaments.length === 0) return '';
         let html = '<div class="card"><h3>📜 Tournament History</h3>';
         db.tournaments.slice().reverse().forEach(t => {
           const winner = db.players.find(p => p.id === t.winner);
-          html +=
-            `<p>🏆 ${t.name} - Champion: ${winner?.name} (${new Date(t.date).toLocaleDateString()})</p>`;
+          html += `<p>🏆 ${t.name} - Champion: ${winner?.name} (${new Date(t.date).toLocaleDateString()})</p>`;
         });
         html += '</div>';
         return html;
@@ -736,7 +786,7 @@
             </div>
             <button onclick="window.createCup()" style="margin-top:1rem;">🏆 Create Cup Match</button>
           </div>
-          ${db.cups.length > 0 ? renderCupHistory(db) : ''}
+          ${renderCupHistory(db)}
         `;
       }
 
@@ -745,7 +795,7 @@
         const playerMap = {};
         db.players.forEach(p => { playerMap[p.id] = p; });
 
-        let html = `
+        mainContent.innerHTML = `
           <div class="card">
             <h2>🏆 Cup Match (10 Maps)</h2>
             <p>Format: Single elimination match | Maps: 10</p>
@@ -754,8 +804,6 @@
             <button onclick="window.submitCupMatch()">🏁 Submit Cup Result</button>
           </div>
         `;
-
-        mainContent.innerHTML = html;
 
         window.addCupMatchRow = function() {
           const div = document.getElementById('cupMatchInputs');
@@ -791,7 +839,8 @@
         saveDB(db);
         renderCupCenter(getDB());
       };
-       window.submitCupMatch = function() {
+
+      window.submitCupMatch = function() {
         const db = getDB();
         if (!db.activeCup) return;
         const cup = db.activeCup;
@@ -809,7 +858,7 @@
 
         if (participants.length < 2) return alert('Need at least 2 players');
 
-        // Record globally
+        // Update global stats - THIS AFFECTS LEADERBOARD
         updatePlayerStatsAfterMatch({ participants, positions });
 
         // Cup winner is 1st place
@@ -821,8 +870,10 @@
         }
 
         cup.completed = true;
+        
+        // Save cup to history
         db.cups.push({
-          type: 'League Cup',
+          type: 'League Cup (10 Maps)',
           winner: cup.winner,
           date: new Date().toISOString()
         });
@@ -830,16 +881,18 @@
         db.activeCup = null;
         checkAchievements(db);
         updateHallOfFame(db);
+        updateGlobalRankings(db);
         saveDB(db);
+        alert('Cup completed! Leaderboard updated.');
         renderCupCenter(getDB());
       };
 
       function renderCupHistory(db) {
+        if (db.cups.length === 0) return '';
         let html = '<div class="card"><h3>📜 Cup History</h3>';
         db.cups.slice().reverse().forEach(c => {
           const winner = db.players.find(p => p.id === c.winner);
-          html +=
-          `<p>🥤 ${c.type} - Winner: ${winner?.name} (${new Date(c.date).toLocaleDateString()})</p>`;
+          html += `<p>🥤 ${c.type} - Winner: ${winner?.name} (${new Date(c.date).toLocaleDateString()})</p>`;
         });
         html += '</div>';
         return html;
@@ -847,9 +900,25 @@
 
       function renderAchievements(db) {
         let html = '<div class="card"><h2>🌟 Achievements</h2>';
+        const achievementNames = {
+          'first_tourney': '🏆 First Tournament Win',
+          '5_tourney': '🏆 5 Tournament Wins',
+          '10_tourney': '🏆 10 Tournament Wins',
+          'tourney_king': '👑 Tournament King (25 Wins)',
+          'first_cup': '🥇 First Cup',
+          '10_cups': '🏅 10 Cups',
+          'cup_legend': '🌟 Cup Legend (25 Cups)',
+          'first_mvp': '⭐ First MVP',
+          '25_mvp': '⭐ 25 MVPs',
+          '50_mvp': '⭐ 50 MVPs',
+          'mvp_god': '⚡ MVP God (100 MVPs)'
+        };
+        
         db.players.forEach(p => {
-          html +=
-            `<p><strong>${p.name}</strong>: ${p.achievements.length ? p.achievements.map(a => '🏅 ' + a).join(', ') : 'No achievements yet'}</p>`;
+          html += `<div style="margin:0.8rem 0; padding:0.5rem; background:rgba(255,215,0,0.05); border-radius:8px;">
+            <strong>${p.name}</strong>:<br>
+            ${p.achievements.length ? p.achievements.map(a => achievementNames[a] || a).join('<br>') : 'No achievements yet'}
+          </div>`;
         });
         html += '</div>';
         mainContent.innerHTML = html;
@@ -858,56 +927,135 @@
       function renderHallOfFame(db) {
         const hof = db.hallOfFame;
         const getName = (id) => db.players.find(p => p.id === id)?.name || '—';
-        mainContent.innerHTML = `<div class="card"><h2>🏛️ Hall Of Fame</h2>
-          <p>🏆 Tournament King: ${getName(hof.tournamentKing)}</p>
-          <p>🌟 Legendary Player (Cups): ${getName(hof.legendaryPlayer)}</p>
-          <p>⚡ Mythic Master (MVP): ${getName(hof.mythicMaster)}</p></div>`;
+        mainContent.innerHTML = `
+          <div class="card">
+            <h2>🏛️ Hall Of Fame</h2>
+            <div style="margin:1rem 0; padding:1rem; background:rgba(255,215,0,0.1); border-radius:12px;">
+              <p>🏆 <strong>Tournament King:</strong> ${getName(hof.tournamentKing)}</p>
+              <p style="font-size:0.9rem; color:#d4af37;">Most Tournament Wins</p>
+            </div>
+            <div style="margin:1rem 0; padding:1rem; background:rgba(255,215,0,0.1); border-radius:12px;">
+              <p>🌟 <strong>Legendary Player:</strong> ${getName(hof.legendaryPlayer)}</p>
+              <p style="font-size:0.9rem; color:#d4af37;">Most Cup Wins</p>
+            </div>
+            <div style="margin:1rem 0; padding:1rem; background:rgba(255,215,0,0.1); border-radius:12px;">
+              <p>⚡ <strong>Mythic Master:</strong> ${getName(hof.mythicMaster)}</p>
+              <p style="font-size:0.9rem; color:#d4af37;">Most MVP Awards</p>
+            </div>
+          </div>
+        `;
       }
 
       function renderHistory(db) {
-        let html = '<div class="card"><h2>📜 Recent Matches</h2>';
-        db.matches.slice(-10).reverse().forEach(m => {
-          html +=
-            `<p>📅 ${new Date(m.date).toLocaleDateString()} - ${m.participants.length} players - 1st: Player #${m.positions.find(p=>p.place===1)?.playerId}</p>`;
-        });
+        let html = '<div class="card"><h2>📜 Complete History</h2>';
+        
+        // Single matches
+        if (db.matches.length > 0) {
+          html += '<h3>Single Matches</h3>';
+          db.matches.slice(-5).reverse().forEach(m => {
+            html += `<p>📅 ${new Date(m.date).toLocaleDateString()} - ${m.participants.length} players - 1st: Player #${m.positions.find(p=>p.place===1)?.playerId}</p>`;
+          });
+        }
+        
+        // Tournament history
+        if (db.tournaments.length > 0) {
+          html += '<h3>Tournaments</h3>';
+          db.tournaments.slice().reverse().forEach(t => {
+            const winner = db.players.find(p => p.id === t.winner);
+            html += `<p>🏆 ${t.name} - Champion: ${winner?.name} (${new Date(t.date).toLocaleDateString()})</p>`;
+          });
+        }
+        
+        // Cup history
+        if (db.cups.length > 0) {
+          html += '<h3>Cups</h3>';
+          db.cups.slice().reverse().forEach(c => {
+            const winner = db.players.find(p => p.id === c.winner);
+            html += `<p>🥤 ${c.type} - Winner: ${winner?.name} (${new Date(c.date).toLocaleDateString()})</p>`;
+          });
+        }
+        
         html += '</div>';
         mainContent.innerHTML = html;
       }
 
       function renderAdmin(db) {
-        mainContent.innerHTML = `<div class="card"><h2>🔧 Admin Tools</h2>
-          <button onclick="window.exportDB()">📤 Export JSON Backup</button>
-          <input type="file" id="importFile" accept=".json"><button onclick="window.importDB()">📥 Import Backup</button>
-          <button onclick="window.undoLastMatch()">↩️ Undo Last Match</button>
-          <button onclick="window.resetData()">⚠️ Reset All Data</button></div>`;
+        mainContent.innerHTML = `
+          <div class="card">
+            <h2>🔧 Admin Tools</h2>
+            <button onclick="window.exportDB()">📤 Export JSON Backup</button>
+            <input type="file" id="importFile" accept=".json">
+            <button onclick="window.importDB()">📥 Import Backup</button>
+            <button onclick="window.undoLastMatch()">↩️ Undo Last Match</button>
+            <button onclick="window.recalculateAllStats()">🔄 Recalculate All Stats</button>
+            <button onclick="window.resetData()" style="background:rgba(255,0,0,0.2); border-color:red; color:#ff6b6b;">⚠️ Reset All Data</button>
+          </div>
+        `;
+        
         window.exportDB = () => {
           const a = document.createElement('a');
-          a.href = URL.createObjectURL(new Blob([JSON.stringify(getDB())], { type: 'application/json' }));
+          a.href = URL.createObjectURL(new Blob([JSON.stringify(getDB(), null, 2)], { type: 'application/json' }));
           a.download = 'stumble_backup.json';
           a.click();
         };
+        
         window.importDB = () => {
           const fileInput = document.getElementById('importFile');
           const file = fileInput.files[0];
           if (!file) return;
           const reader = new FileReader();
           reader.onload = (e) => {
-            localStorage.setItem(STORAGE_KEY, e.target.result);
-            alert('Imported!');
-            location.reload();
+            try {
+              const data = JSON.parse(e.target.result);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+              alert('Imported successfully!');
+              location.reload();
+            } catch (err) {
+              alert('Invalid JSON file');
+            }
           };
           reader.readAsText(file);
         };
+        
         window.undoLastMatch = () => {
           const db = getDB();
           if (db.matches.length === 0) return alert('No matches to undo');
           db.matches.pop();
           saveDB(db);
-          alert('Last match removed (partial rollback - full stats recalculation needed)');
+          alert('Last single match removed. Recalculating stats...');
           location.reload();
         };
+        
+        window.recalculateAllStats = () => {
+          if (confirm('This will reset all stats and recalculate from match history. Continue?')) {
+            const db = getDB();
+            // Reset player stats
+            db.players.forEach(p => {
+              p.matchesPlayed = 0;
+              p.wins = 0;
+              p.losses = 0;
+              p.winRate = 0;
+              p.totalPoints = 0;
+              p.mvpCount = 0;
+              p.currentWinStreak = 0;
+              p.longestWinStreak = 0;
+              p.achievements = [];
+            });
+            
+            saveDB(db);
+            
+            // Replay all matches
+            db.matches.forEach(m => {
+              updatePlayerStatsAfterMatch({ participants: m.participants, positions: m.positions });
+            });
+            
+            alert('Stats recalculated!');
+            location.reload();
+          }
+        };
+        
         window.resetData = () => {
-          if (confirm('Delete ALL data permanently?')) {
+          if (confirm('Delete ALL data permanently? This cannot be undone!')) {
             localStorage.removeItem(STORAGE_KEY);
             initializeDB();
             location.reload();
