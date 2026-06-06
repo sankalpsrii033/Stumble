@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Stumble League Manager Pro • Esports Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 10%, #1a1e2b, #0b0d14);
+      font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+      color: #e8edf2;
+      display: flex;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* glassmorphism sidebar */
+    .sidebar {
+      width: 280px;
+      background: rgba(18, 22, 33, 0.75);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-right: 1px solid rgba(212, 175, 55, 0.25);
+      box-shadow: 8px 0 30px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      padding: 1.8rem 1.2rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 20;
+      transition: all 0.25s;
+    }
+
+    .logo {
+      font-size: 1.9rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #f5cb5c, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      flex: 1;
+    }
+
+    .nav-item {
+      padding: 0.9rem 1.2rem;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #cdd6e0;
+      letter-spacing: 0.4px;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: #d4af37;
+      color: #f5e7b3;
+      box-shadow: 0 10px 20px -8px rgba(212, 175, 55, 0.3);
+      transform: translateX(6px);
+    }
+
+    .main-panel {
+      flex: 1;
+      padding: 2rem 2.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+      background: rgba(10, 12, 20, 0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    /* glass cards */
+    .card {
+      background: rgba(20, 25, 39, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 28px;
+      padding: 1.6rem;
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.6);
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      margin-bottom: 1.4rem;
+      background: linear-gradient(to right, #ecd89f, #c9a940);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.4rem;
+    }
+
+    .stat-badge {
+      background: rgba(255, 215, 0, 0.08);
+      border-radius: 20px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    button, .btn {
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid #d4af37;
+      color: #fae576;
+      padding: 0.7rem 1.5rem;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: 0.2s;
+      margin: 0.3rem;
+    }
+
+    button:hover {
+      background: #d4af37;
+      color: #0a0c14;
+      box-shadow: 0 0 18px #f5cb5c;
+    }
+
+    select, input {
+      background: #1b1f2d;
+      border: 1px solid #d4af37;
+      color: white;
+      padding: 0.7rem 1rem;
+      border-radius: 24px;
+      margin: 0.3rem;
+      outline: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th {
+      text-align: left;
+      color: #d4af37;
+      padding: 0.8rem;
+      border-bottom: 1px solid #d4af3750;
+    }
+
+    td {
+      padding: 0.7rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .nav-links {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">🏆 STUMBLE LEAGUE</div>
+    <nav class="nav-links" id="navLinks">
+      <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
+      <div class="nav-item" data-page="players">👥 Players</div>
+      <div class="nav-item" data-page="leaderboard">🏅 Leaderboard</div>
+      <div class="nav-item" data-page="match">⚡ Match Center</div>
+      <div class="nav-item" data-page="tournament">🏟️ Tournament</div>
+      <div class="nav-item" data-page="cup">🏆 Cup Center</div>
+      <div class="nav-item" data-page="achievements">🌟 Achievements</div>
+      <div class="nav-item" data-page="halloffame">🏛️ Hall Of Fame</div>
+      <div class="nav-item" data-page="history">📜 History</div>
+      <div class="nav-item" data-page="admin">🔧 Admin Tools</div>
+    </nav>
+  </aside>
+
+  <main class="main-panel" id="mainContent">
+    <!-- dynamic page content injected by JS -->
+  </main>
+
+  <script>
+    (function() {
+      // ---------- DATABASE & STORAGE ----------
+      const STORAGE_KEY = 'stumble_league_pro_db';
+
+      const defaultPlayers = [
+        { id: 1, name: "Sankalp", username: "sankalp_op", nickname: "" },
+        { id: 2, name: "Akshat Rakesh", username: "terrorbebu", nickname: "" },
+        { id: 3, name: "Atharva Mishra", username: "panditdabang", nickname: "" },
+        { id: 4, name: "Nayan Mehrotra", username: "nbot", nickname: "" },
+        { id: 5, name: "Yugank Dwivedi", username: "yuggu", nickname: "" }
+      ];
+
+      function initializeDB() {
+        let db = localStorage.getItem(STORAGE_KEY);
+        if (!db) {
+          const fresh = {
+            players: defaultPlayers.map(p => ({
+              ...p,
+              matchesPlayed: 0,
+              wins: 0,
+              losses: 0,
+              winRate: 0,
+              totalPoints: 0,
+              mvpCount: 0,
+              tournamentWins: 0,
+              cupWins: 0,
+              currentRank: 0,
+              highestRank: 0,
+              currentWinStreak: 0,
+              longestWinStreak: 0,
+              achievements: []
+            })),
+            matches: [],
+            tournaments: [],
+            cups: [],
+            hallOfFame: { tournamentKing: null, legendaryPlayer: null, mythicMaster: null }
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+        }
+      }
+      initializeDB();
+
+      function getDB() {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY));
+      }
+      function saveDB(db) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+      }
+
+      // ---------- HELPERS ----------
+      function updatePlayerStatsAfterMatch(matchData) {
+        const db = getDB();
+        const { participants, positions } = matchData; // positions: array of {playerId, place}
+        participants.forEach(pid => {
+          const player = db.players.find(p => p.id === pid);
+          if (!player) return;
+          player.matchesPlayed += 1;
+        });
+
+        const firstPlaceEntry = positions.find(p => p.place === 1);
+        if (firstPlaceEntry) {
+          const winner = db.players.find(p => p.id === firstPlaceEntry.playerId);
+          if (winner) {
+            winner.wins += 1;
+            winner.mvpCount += 1;
+            winner.currentWinStreak += 1;
+            if (winner.currentWinStreak > winner.longestWinStreak) {
+              winner.longestWinStreak = winner.currentWinStreak;
+            }
+          }
+        }
+
+        positions.forEach(entry => {
+          const player = db.players.find(p => p.id === entry.playerId);
+          if (!player) return;
+          if (entry.place !== 1) {
+            player.losses += 1;
+            player.currentWinStreak = 0;
+          }
+          const pointsMap = {1:18, 2:15, 3:13, 4:12, 5:11};
+          player.totalPoints += (pointsMap[entry.place] || 0);
+        });
+
+        // recalc win rates
+        db.players.forEach(p => {
+          p.winRate = p.matchesPlayed > 0 ? ((p.wins / p.matchesPlayed) * 100).toFixed(1) : 0;
+        });
+
+        // rankings based on win rate > mvp > matches
+        const sorted = [...db.players].sort((a,b) => {
+          if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+          if (b.mvpCount !== a.mvpCount) return b.mvpCount - a.mvpCount;
+          return b.matchesPlayed - a.matchesPlayed;
+        });
+        sorted.forEach((p, idx) => {
+          p.currentRank = idx + 1;
+          if (!p.highestRank || p.currentRank < p.highestRank) p.highestRank = p.currentRank;
+        });
+
+        checkAchievements(db);
+        updateHallOfFame(db);
+        saveDB(db);
+      }
+
+      function checkAchievements(db) {
+        db.players.forEach(player => {
+          const ach = player.achievements;
+          if (player.tournamentWins >= 1 && !ach.includes('first_tourney')) ach.push('first_tourney');
+          if (player.tournamentWins >= 5 && !ach.includes('5_tourney')) ach.push('5_tourney');
+          if (player.tournamentWins >= 10 && !ach.includes('10_tourney')) ach.push('10_tourney');
+          if (player.tournamentWins >= 25 && !ach.includes('tourney_king')) ach.push('tourney_king');
+          if (player.cupWins >= 1 && !ach.includes('first_cup')) ach.push('first_cup');
+          if (player.cupWins >= 10 && !ach.includes('10_cups')) ach.push('10_cups');
+          if (player.cupWins >= 25 && !ach.includes('cup_legend')) ach.push('cup_legend');
+          if (player.mvpCount >= 1 && !ach.includes('first_mvp')) ach.push('first_mvp');
+          if (player.mvpCount >= 25 && !ach.includes('25_mvp')) ach.push('25_mvp');
+          if (player.mvpCount >= 50 && !ach.includes('50_mvp')) ach.push('50_mvp');
+          if (player.mvpCount >= 100 && !ach.includes('mvp_god')) ach.push('mvp_god');
+        });
+      }
+
+      function updateHallOfFame(db) {
+        if (db.players.length === 0) return;
+        const mostTourney = [...db.players].sort((a,b) => b.tournamentWins - a.tournamentWins)[0];
+        db.hallOfFame.tournamentKing = mostTourney?.id || null;
+        const mostCups = [...db.players].sort((a,b) => b.cupWins - a.cupWins)[0];
+        db.hallOfFame.legendaryPlayer = mostCups?.id || null;
+        const mostMvp = [...db.players].sort((a,b) => b.mvpCount - a.mvpCount)[0];
+        db.hallOfFame.mythicMaster = mostMvp?.id || null;
+      }
+
+      // ---------- RENDER ENGINE ----------
+      const mainContent = document.getElementById('mainContent');
+      const navItems = document.querySelectorAll('.nav-item');
+
+      function navigateTo(page) {
+        navItems.forEach(n => n.classList.remove('active'));
+        document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+        renderPage(page);
+      }
+
+      navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          navigateTo(e.currentTarget.dataset.page);
+        });
+      });
+
+      function renderPage(page) {
+        const db = getDB();
+        switch(page) {
+          case 'dashboard': renderDashboard(db); break;
+          case 'players': renderPlayers(db); break;
+          case 'leaderboard': renderLeaderboard(db); break;
+          case 'match': renderMatchCenter(db); break;
+          case 'tournament': renderTournament(db); break;
+          case 'cup': renderCupCenter(db); break;
+          case 'achievements': renderAchievements(db); break;
+          case 'halloffame': renderHallOfFame(db); break;
+          case 'history': renderHistory(db); break;
+          case 'admin': renderAdmin(db); break;
+          default: renderDashboard(db);
+        }
+      }
+
+      function renderDashboard(db) {
+        const totalMatches = db.matches.length;
+        const totalTournaments = db.tournaments.length;
+        const totalCups = db.cups.length;
+        const sorted = [...db.players].sort((a,b) => a.currentRank - b.currentRank);
+        const topPlayer = sorted[0]?.name || '—';
+        mainContent.innerHTML = `
+          <div class="card">
+            <h2>🔥 DASHBOARD</h2>
+            <div class="grid">
+              <div class="stat-badge">👥 Players<br><strong>${db.players.length}</strong></div>
+              <div class="stat-badge">⚔️ Matches<br><strong>${totalMatches}</strong></div>
+              <div class="stat-badge">🏟️ Tournaments<br><strong>${totalTournaments}</strong></div>
+              <div class="stat-badge">🏆 Cups<br><strong>${totalCups}</strong></div>
+              <div class="stat-badge">🥇 #1 Ranked<br><strong>${topPlayer}</strong></div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderPlayers(db) {
+        let html = `<div class="card"><h2>👥 Player Profiles</h2>`;
+        db.players.forEach(p => {
+          html += `<div style="margin-bottom:1rem; padding:1rem; background:rgba(255,215,0,0.05); border-radius:16px;">
+            <strong>${p.name}</strong> (@${p.username})<br>
+            Matches: ${p.matchesPlayed} | Wins: ${p.wins} | Losses: ${p.losses} | WR: ${p.winRate}%<br>
+            Points: ${p.totalPoints} | MVPs: ${p.mvpCount} | Rank: #${p.currentRank}<br>
+            🏆 Tourney Wins: ${p.tournamentWins} | 🥤 Cup Wins: ${p.cupWins}
+          </div>`;
+        });
+        html += `</div>`;
+        mainContent.innerHTML = html;
+      }
+
+      function renderLeaderboard(db) {
+        const sorted = [...db.players].sort((a,b) => a.currentRank - b.currentRank);
+        let rows = sorted.map(p => `<tr><td>#${p.currentRank}</td><td>${p.name}</td><td>${p.winRate}%</td><td>${p.mvpCount}</td><td>${p.matchesPlayed}</td></tr>`).join('');
+        mainContent.innerHTML = `<div class="card"><h2>🏅 Global Leaderboard</h2><table><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th></tr>${rows}</table></div>`;
+      }
+
+      function renderMatchCenter(db) {
+        const playerOptions = db.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        mainContent.innerHTML = `
+          <div class="card"><h2>⚡ Record Match</h2>
+            <p>Select participants & positions (1st gets MVP)</p>
+            <div id="matchParticipants"></div>
+            <button onclick="window.addMatchRow()">+ Add Player</button>
+            <button onclick="window.submitMatch()">📤 Submit Match</button>
+          </div>
+        `;
+        window.matchRows = [];
+        window.addMatchRow = function() {
+          const div = document.getElementById('matchParticipants');
+          const row = document.createElement('div');
+          row.innerHTML = `<select class="playerSelect">${playerOptions}</select>
+            <select class="placeSelect"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select>`;
+          div.appendChild(row);
+        };
+        window.submitMatch = function() {
+          const selects = document.querySelectorAll('#matchParticipants div');
+          const positions = [];
+          const participants = [];
+          selects.forEach(row => {
+            const pid = parseInt(row.querySelector('.playerSelect').value);
+            const place = parseInt(row.querySelector('.placeSelect').value);
+            if (!participants.includes(pid)) participants.push(pid);
+            positions.push({playerId: pid, place});
+          });
+          if (participants.length < 2) return alert('Need at least 2 players');
+          const db = getDB();
+          db.matches.push({ date: new Date().toISOString(), participants, positions });
+          saveDB(db);
+          updatePlayerStatsAfterMatch({ participants, positions });
+          alert('Match recorded!');
+          renderMatchCenter(getDB());
+        };
+      }
+
+      function renderTournament(db) {
+        mainContent.innerHTML = `<div class="card"><h2>🏟️ Tournament (simplified demo)</h2><p>Create tournament and assign winner manually for stats.</p>
+          <button onclick="window.simulateTourney()">⚡ Simulate Tournament (Sankalp wins)</button></div>`;
+        window.simulateTourney = function() {
+          const db = getDB();
+          const winner = db.players.find(p => p.name === 'Sankalp') || db.players[0];
+          winner.tournamentWins += 1;
+          db.tournaments.push({name:'Pro Cup', winner:winner.id, date: new Date().toISOString()});
+          checkAchievements(db);
+          updateHallOfFame(db);
+          saveDB(db);
+          alert('Tournament recorded!');
+          renderTournament(getDB());
+        };
+      }
+
+      function renderCupCenter(db) {
+        mainContent.innerHTML = `<div class="card"><h2>🏆 Cup Center</h2><button onclick="window.simulateCup()">🥇 Simulate Cup Win (Akshat)</button></div>`;
+        window.simulateCup = function() {
+          const db = getDB();
+          const winner = db.players.find(p => p.name === 'Akshat Rakesh') || db.players[0];
+          winner.cupWins += 1;
+          db.cups.push({type:'League', winner:winner.id, date: new Date().toISOString()});
+          checkAchievements(db);
+          updateHallOfFame(db);
+          saveDB(db);
+          alert('Cup win added!');
+          renderCupCenter(getDB());
+        };
+      }
+
+      function renderAchievements(db) {
+        let html = '<div class="card"><h2>🌟 Achievements</h2>';
+        db.players.forEach(p => {
+          html += `<strong>${p.name}</strong>: ${p.achievements.length ? p.achievements.join(', ') : 'None'}<br>`;
+        });
+        html += '</div>';
+        mainContent.innerHTML = html;
+      }
+
+      function renderHallOfFame(db) {
+        const hof = db.hallOfFame;
+        const getName = (id) => db.players.find(p=>p.id===id)?.name || '—';
+        mainContent.innerHTML = `<div class="card"><h2>🏛️ Hall Of Fame</h2>
+          <p>🏆 Tournament King: ${getName(hof.tournamentKing)}</p>
+          <p>🌟 Legendary Player: ${getName(hof.legendaryPlayer)}</p>
+          <p>⚡ Mythic Master (MVP): ${getName(hof.mythicMaster)}</p></div>`;
+      }
+
+      function renderHistory(db) {
+        let html = '<div class="card"><h2>📜 Recent Matches</h2>';
+        db.matches.slice(-8).reverse().forEach(m => html += `<p>${new Date(m.date).toLocaleDateString()} - players: ${m.participants.length}</p>`);
+        html += '</div>';
+        mainContent.innerHTML = html;
+      }
+
+      function renderAdmin(db) {
+        mainContent.innerHTML = `<div class="card"><h2>🔧 Admin Tools</h2>
+          <button onclick="window.exportDB()">📤 Export JSON</button>
+          <input type="file" id="importFile" accept=".json"><button onclick="window.importDB()">📥 Import</button>
+          <button onclick="window.undoLastMatch()">↩️ Undo Last Match</button>
+          <button onclick="window.resetData()">⚠️ Reset All Data</button></div>`;
+        window.exportDB = () => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([JSON.stringify(getDB())], {type:'application/json'}));
+          a.download = 'stumble_backup.json'; a.click();
+        };
+        window.importDB = () => {
+          const fileInput = document.getElementById('importFile');
+          const file = fileInput.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            localStorage.setItem(STORAGE_KEY, e.target.result);
+            alert('Imported!'); location.reload();
+          };
+          reader.readAsText(file);
+        };
+        window.undoLastMatch = () => {
+          const db = getDB();
+          if (db.matches.length===0) return alert('No matches');
+          db.matches.pop(); saveDB(db); alert('Last match removed (partial rollback)'); location.reload();
+        };
+        window.resetData = () => {
+          if(confirm('Delete all data?')) { localStorage.removeItem(STORAGE_KEY); initializeDB(); location.reload(); }
+        };
+      }
+
+      // initial render
+      renderPage('dashboard');
+    })();
+  </script>
+</body>
+</html>
+
