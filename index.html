@@ -287,12 +287,12 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
       }
 
-      // ---------- CORE STATS ENGINE ----------
+      // ---------- CORE STATS ENGINE (FIXED) ----------
       function updatePlayerStatsAfterMatch(matchData) {
         const db = getDB();
         const { participants, positions } = matchData;
 
-        // Update matches played for all participants
+        // Update matches played for ALL participants
         participants.forEach(pid => {
           const player = db.players.find(p => p.id === pid);
           if (!player) return;
@@ -313,24 +313,32 @@
           }
         }
 
-        // Update all positions
+        // Update all positions with points and losses
+        const pointsMap = { 1: 18, 2: 15, 3: 13, 4: 12, 5: 11 };
         positions.forEach(entry => {
           const player = db.players.find(p => p.id === entry.playerId);
           if (!player) return;
+          
+          // Add points based on position
+          player.totalPoints += (pointsMap[entry.place] || 0);
+          
+          // Give losses to everyone except 1st place
           if (entry.place !== 1) {
             player.losses += 1;
             player.currentWinStreak = 0;
           }
-          const pointsMap = { 1: 18, 2: 15, 3: 13, 4: 12, 5: 11 };
-          player.totalPoints += (pointsMap[entry.place] || 0);
         });
 
-        // Recalculate all win rates
+        // CRITICAL FIX: Recalculate win rates for ALL players
         db.players.forEach(p => {
-          p.winRate = p.matchesPlayed > 0 ? ((p.wins / p.matchesPlayed) * 100).toFixed(1) : 0;
+          if (p.matchesPlayed > 0) {
+            p.winRate = parseFloat(((p.wins / p.matchesPlayed) * 100).toFixed(1));
+          } else {
+            p.winRate = 0;
+          }
         });
 
-        // Update rankings based on ALL matches (including tournament & cup)
+        // Update rankings based on Win Rate > MVP > Matches Played
         updateGlobalRankings(db);
         
         checkAchievements(db);
@@ -339,17 +347,19 @@
       }
 
       function updateGlobalRankings(db) {
-        // Rank based on: Win Rate > MVP Count > Total Matches Played
+        // Sort by: Win Rate (desc) > MVP Count (desc) > Matches Played (desc)
         const sorted = [...db.players].sort((a, b) => {
-          // Primary: Win Rate (highest first)
           const winRateA = parseFloat(a.winRate) || 0;
           const winRateB = parseFloat(b.winRate) || 0;
-          if (winRateB !== winRateA) return winRateB - winRateA;
           
-          // Secondary: MVP Count
-          if (b.mvpCount !== a.mvpCount) return b.mvpCount - a.mvpCount;
+          if (winRateB !== winRateA) {
+            return winRateB - winRateA;
+          }
           
-          // Tertiary: Total Matches Played
+          if (b.mvpCount !== a.mvpCount) {
+            return b.mvpCount - a.mvpCount;
+          }
+          
           return b.matchesPlayed - a.matchesPlayed;
         });
         
@@ -422,23 +432,27 @@
       }
 
       function renderDashboard(db) {
-        const totalMatches = db.matches.length;
         const totalTournaments = db.tournaments.length;
         const totalCups = db.cups.length;
+        
+        // Count ALL matches including tournament and cup matches
+        let totalMatchesCount = db.matches.length;
+        db.tournaments.forEach(t => {
+          totalMatchesCount += t.matchCount || 0;
+        });
+        db.cups.forEach(c => {
+          totalMatchesCount += 1; // Each cup is 1 match
+        });
+        
         const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
         const topPlayer = sorted[0]?.name || '—';
-        
-        // Count all matches including tournament and cup
-        const allMatchesCount = db.matches.length + 
-          db.tournaments.reduce((sum, t) => sum + (t.standings?.[0]?.matchWins || 0), 0) +
-          db.cups.length;
         
         mainContent.innerHTML = `
           <div class="card">
             <h2>🔥 DASHBOARD</h2>
             <div class="grid">
               <div class="stat-badge">👥 Players<br><strong>${db.players.length}</strong></div>
-              <div class="stat-badge">⚔️ All Matches<br><strong>${allMatchesCount}</strong></div>
+              <div class="stat-badge">⚔️ All Matches<br><strong>${totalMatchesCount}</strong></div>
               <div class="stat-badge">🏟️ Tournaments<br><strong>${totalTournaments}</strong></div>
               <div class="stat-badge">🏆 Cups<br><strong>${totalCups}</strong></div>
               <div class="stat-badge">🥇 #1 Ranked<br><strong>${topPlayer}</strong></div>
@@ -467,25 +481,24 @@
       }
 
       function renderLeaderboard(db) {
-        // Leaderboard now reflects ALL matches (single, tournament, and cup)
         const sorted = [...db.players].sort((a, b) => a.currentRank - b.currentRank);
         let rows = sorted.map((p, idx) => {
           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
           return `<tr>
             <td>${medal} #${p.currentRank}</td>
             <td><strong>${p.name}</strong></td>
-            <td>${p.winRate}%</td>
+            <td><strong>${p.winRate}%</strong></td>
             <td>${p.mvpCount}</td>
             <td>${p.matchesPlayed}</td>
             <td>${p.totalPoints}</td>
-            <td>${p.tournamentWins} / ${p.cupWins}</td>
+            <td>${p.wins}W / ${p.losses}L</td>
           </tr>`;
         }).join('');
         
         mainContent.innerHTML = `
           <div class="card">
             <h2>🏅 Global Leaderboard</h2>
-            <p style="color:#d4af37; margin-bottom:1rem;">📊 Ranking based on ALL matches (Win Rate > MVP > Matches Played)</p>
+            <p style="color:#d4af37; margin-bottom:1rem;">📊 ALL matches affect rankings (Win Rate > MVP > Matches Played)</p>
             <table>
               <thead>
                 <tr>
@@ -495,7 +508,7 @@
                   <th>MVP</th>
                   <th>Matches</th>
                   <th>Points</th>
-                  <th>🏆/🥤</th>
+                  <th>W/L</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -508,7 +521,7 @@
         const playerOptions = db.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
         mainContent.innerHTML = `
           <div class="card"><h2>⚡ Record Single Match</h2>
-            <p>Select participants & positions (1st gets MVP)</p>
+            <p>Quick match - affects overall stats & leaderboard</p>
             <div id="matchParticipants"></div>
             <button onclick="window.addMatchRow()">+ Add Player</button>
             <button onclick="window.submitMatch()">📤 Submit Match</button>
@@ -533,6 +546,7 @@
             positions.push({ playerId: pid, place });
           });
           if (participants.length < 2) return alert('Need at least 2 players');
+          
           const db = getDB();
           db.matches.push({ 
             date: new Date().toISOString(), 
@@ -541,13 +555,16 @@
             positions 
           });
           saveDB(db);
+          
+          // THIS updates all stats including win rate and rankings
           updatePlayerStatsAfterMatch({ participants, positions });
-          alert('Match recorded! Leaderboard updated.');
+          
+          alert('✅ Match recorded! Win rates & rankings updated.');
           renderMatchCenter(getDB());
         };
       }
 
-      // ==================== TOURNAMENT SYSTEM ====================
+      // ==================== TOURNAMENT SYSTEM (FIXED) ====================
       function renderTournament(db) {
         if (db.activeTournament) {
           renderActiveTournament(db);
@@ -600,7 +617,6 @@
               <tr><th>Player</th><th>Match Wins</th><th>Total Points</th></tr>
         `;
 
-        // Sort standings by match wins then total points
         const sortedStandings = [...tourney.standings].sort((a, b) => {
           if (b.matchWins !== a.matchWins) return b.matchWins - a.matchWins;
           return b.totalPoints - a.totalPoints;
@@ -615,6 +631,7 @@
         if (tourney.currentMatch <= tourney.totalMatches) {
           html += `
             <h3>Match #${tourney.currentMatch} Results</h3>
+            <p style="color:#f5cb5c;">⚠️ Each tournament match affects overall player stats & win rates</p>
             <div id="tourneyMatchInputs"></div>
             <button onclick="window.addTourneyMatchRow()">+ Add Player Position</button>
             <button onclick="window.submitTourneyMatch()">✅ Submit Match Result</button>
@@ -624,7 +641,7 @@
         if (tourney.completed) {
           const winner = db.players.find(p => p.id === tourney.winner);
           html += `<div style="margin-top:1rem;"><span class="winner-badge">👑 Champion: ${winner?.name}</span></div>`;
-          html += `<button onclick="window.finishTournament()" style="margin-top:1rem;">🏁 Close Tournament</button>`;
+          html += `<button onclick="window.finishTournament()" style="margin-top:1rem;">🏁 Close & Save Tournament</button>`;
         }
 
         html += `</div>`;
@@ -672,7 +689,8 @@
           standings,
           currentMatch: 1,
           completed: false,
-          winner: null
+          winner: null,
+          matchCount: 0 // Track total matches played
         };
 
         saveDB(db);
@@ -697,7 +715,7 @@
 
         if (participants.length < 2) return alert('Need at least 2 players');
 
-        // Update global stats - THIS AFFECTS LEADERBOARD
+        // CRITICAL: Update global stats for ALL players
         updatePlayerStatsAfterMatch({ participants, positions });
 
         // Update tournament standings
@@ -713,17 +731,17 @@
           if (standing) standing.totalPoints += (pointsMap[entry.place] || 0);
         });
 
+        tourney.matchCount += 1;
         tourney.currentMatch += 1;
 
-        // Check if tournament complete
         if (tourney.currentMatch > tourney.totalMatches) {
           tourney.completed = true;
-          // Find winner (most match wins)
           const sorted = [...tourney.standings].sort((a, b) => b.matchWins - a.matchWins);
           tourney.winner = sorted[0].playerId;
         }
 
         saveDB(db);
+        alert('✅ Tournament match recorded! Win rates updated.');
         renderTournament(getDB());
       };
 
@@ -731,22 +749,20 @@
         const db = getDB();
         if (!db.activeTournament?.completed) return;
         
-        // Award tournament win to champion
         const winner = db.players.find(p => p.id === db.activeTournament.winner);
         if (winner) winner.tournamentWins += 1;
 
-        // Save to history
         db.tournaments.push({
           name: db.activeTournament.name,
           winner: db.activeTournament.winner,
           date: new Date().toISOString(),
-          standings: db.activeTournament.standings
+          standings: db.activeTournament.standings,
+          matchCount: db.activeTournament.matchCount
         });
 
         db.activeTournament = null;
         checkAchievements(db);
         updateHallOfFame(db);
-        updateGlobalRankings(db);
         saveDB(db);
         renderTournament(getDB());
       };
@@ -756,13 +772,13 @@
         let html = '<div class="card"><h3>📜 Tournament History</h3>';
         db.tournaments.slice().reverse().forEach(t => {
           const winner = db.players.find(p => p.id === t.winner);
-          html += `<p>🏆 ${t.name} - Champion: ${winner?.name} (${new Date(t.date).toLocaleDateString()})</p>`;
+          html += `<p>🏆 ${t.name} - Champion: ${winner?.name} (${new Date(t.date).toLocaleDateString()}) - ${t.matchCount || 0} matches</p>`;
         });
         html += '</div>';
         return html;
       }
 
-      // ==================== CUP SYSTEM ====================
+      // ==================== CUP SYSTEM (FIXED) ====================
       function renderCupCenter(db) {
         if (db.activeCup) {
           renderActiveCup(db);
@@ -776,6 +792,7 @@
           <div class="card">
             <h2>🏆 Cup Center</h2>
             <p><strong>Cup Format:</strong> Single match with 10 maps</p>
+            <p style="color:#f5cb5c;">⚠️ Cup match affects overall player stats & win rates</p>
             <div style="margin-top:1rem;">
               <label>Select Participants:</label><br>
               ${db.players.map(p => `
@@ -799,6 +816,7 @@
           <div class="card">
             <h2>🏆 Cup Match (10 Maps)</h2>
             <p>Format: Single elimination match | Maps: 10</p>
+            <p style="color:#f5cb5c;">⚠️ This match will affect overall win rates & rankings</p>
             <div id="cupMatchInputs"></div>
             <button onclick="window.addCupMatchRow()">+ Add Player Position</button>
             <button onclick="window.submitCupMatch()">🏁 Submit Cup Result</button>
@@ -858,10 +876,10 @@
 
         if (participants.length < 2) return alert('Need at least 2 players');
 
-        // Update global stats - THIS AFFECTS LEADERBOARD
+        // CRITICAL: Update global stats for ALL players
         updatePlayerStatsAfterMatch({ participants, positions });
 
-        // Cup winner is 1st place
+        // Cup winner gets cup win
         const firstPlace = positions.find(p => p.place === 1);
         if (firstPlace) {
           const winner = db.players.find(p => p.id === firstPlace.playerId);
@@ -871,7 +889,6 @@
 
         cup.completed = true;
         
-        // Save cup to history
         db.cups.push({
           type: 'League Cup (10 Maps)',
           winner: cup.winner,
@@ -881,9 +898,8 @@
         db.activeCup = null;
         checkAchievements(db);
         updateHallOfFame(db);
-        updateGlobalRankings(db);
         saveDB(db);
-        alert('Cup completed! Leaderboard updated.');
+        alert('✅ Cup completed! Win rates & rankings updated.');
         renderCupCenter(getDB());
       };
 
@@ -916,7 +932,7 @@
         
         db.players.forEach(p => {
           html += `<div style="margin:0.8rem 0; padding:0.5rem; background:rgba(255,215,0,0.05); border-radius:8px;">
-            <strong>${p.name}</strong>:<br>
+            <strong>${p.name}</strong> (MVPs: ${p.mvpCount})<br>
             ${p.achievements.length ? p.achievements.map(a => achievementNames[a] || a).join('<br>') : 'No achievements yet'}
           </div>`;
         });
@@ -947,17 +963,17 @@
       }
 
       function renderHistory(db) {
-        let html = '<div class="card"><h2>📜 Complete History</h2>';
+        let html = '<div class="card"><h2>📜 Complete Match History</h2>';
         
-        // Single matches
         if (db.matches.length > 0) {
           html += '<h3>Single Matches</h3>';
           db.matches.slice(-5).reverse().forEach(m => {
-            html += `<p>📅 ${new Date(m.date).toLocaleDateString()} - ${m.participants.length} players - 1st: Player #${m.positions.find(p=>p.place===1)?.playerId}</p>`;
+            const firstPlace = m.positions.find(p => p.place === 1);
+            const winner = db.players.find(p => p.id === firstPlace?.playerId);
+            html += `<p>📅 ${new Date(m.date).toLocaleDateString()} - ${m.participants.length} players - Winner: ${winner?.name || 'Unknown'}</p>`;
           });
         }
         
-        // Tournament history
         if (db.tournaments.length > 0) {
           html += '<h3>Tournaments</h3>';
           db.tournaments.slice().reverse().forEach(t => {
@@ -966,7 +982,6 @@
           });
         }
         
-        // Cup history
         if (db.cups.length > 0) {
           html += '<h3>Cups</h3>';
           db.cups.slice().reverse().forEach(c => {
@@ -986,8 +1001,6 @@
             <button onclick="window.exportDB()">📤 Export JSON Backup</button>
             <input type="file" id="importFile" accept=".json">
             <button onclick="window.importDB()">📥 Import Backup</button>
-            <button onclick="window.undoLastMatch()">↩️ Undo Last Match</button>
-            <button onclick="window.recalculateAllStats()">🔄 Recalculate All Stats</button>
             <button onclick="window.resetData()" style="background:rgba(255,0,0,0.2); border-color:red; color:#ff6b6b;">⚠️ Reset All Data</button>
           </div>
         `;
@@ -1017,45 +1030,8 @@
           reader.readAsText(file);
         };
         
-        window.undoLastMatch = () => {
-          const db = getDB();
-          if (db.matches.length === 0) return alert('No matches to undo');
-          db.matches.pop();
-          saveDB(db);
-          alert('Last single match removed. Recalculating stats...');
-          location.reload();
-        };
-        
-        window.recalculateAllStats = () => {
-          if (confirm('This will reset all stats and recalculate from match history. Continue?')) {
-            const db = getDB();
-            // Reset player stats
-            db.players.forEach(p => {
-              p.matchesPlayed = 0;
-              p.wins = 0;
-              p.losses = 0;
-              p.winRate = 0;
-              p.totalPoints = 0;
-              p.mvpCount = 0;
-              p.currentWinStreak = 0;
-              p.longestWinStreak = 0;
-              p.achievements = [];
-            });
-            
-            saveDB(db);
-            
-            // Replay all matches
-            db.matches.forEach(m => {
-              updatePlayerStatsAfterMatch({ participants: m.participants, positions: m.positions });
-            });
-            
-            alert('Stats recalculated!');
-            location.reload();
-          }
-        };
-        
         window.resetData = () => {
-          if (confirm('Delete ALL data permanently? This cannot be undone!')) {
+          if (confirm('Delete ALL data permanently?')) {
             localStorage.removeItem(STORAGE_KEY);
             initializeDB();
             location.reload();
