@@ -11,12 +11,16 @@
     .logo{font-size:1.6rem;font-weight:800;color:#d4af37;text-align:center;margin-bottom:2rem}
     .nav-item{padding:.8rem;margin:.3rem 0;border-radius:8px;cursor:pointer;color:#888;font-weight:600}
     .nav-item:hover,.nav-item.active{background:rgba(212,175,55,0.15);color:#d4af37}
+    .nav-item.locked{color:#666}
+    .nav-item.locked::after{content:" 🔒";font-size:.7rem}
     .main-panel{flex:1;padding:2rem;overflow-y:auto}
     .card{background:#11161e;border:1px solid #2a3040;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
     h2{color:#d4af37;margin-bottom:1rem}
     h3{color:#e0b040;margin:1rem 0}
     button{background:#d4af37;color:#000;border:none;padding:.6rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;margin:.3rem}
     button:hover{background:#e8c550}
+    button.unlock-btn{background:#2a3040;color:#d4af37;border:1px solid #d4af37}
+    button.unlock-btn:hover{background:#d4af37;color:#000}
     select,input{background:#0a0e14;border:1px solid #2a3040;color:#fff;padding:.5rem;border-radius:6px;margin:.2rem}
     table{width:100%;border-collapse:collapse;margin:1rem 0}
     th{text-align:left;color:#d4af37;padding:.7rem;border-bottom:2px solid #d4af37}
@@ -24,25 +28,110 @@
     .stat-box{background:#0a0e14;border:1px solid #2a3040;border-radius:8px;padding:1rem;margin:.5rem 0}
     .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem}
     .badge{background:#d4af37;color:#000;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.85rem}
+    .locked-badge{background:#c44;color:#fff;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.75rem}
+    .unlocked-badge{background:#4c4;color:#fff;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.75rem}
+    #passwordModal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:1000}
+    .modal-box{background:#11161e;border:2px solid #d4af37;border-radius:16px;padding:2rem;text-align:center;min-width:350px}
+    .modal-box input{width:100%;margin:1rem 0;font-size:1.1rem;text-align:center}
+    .error-msg{color:#f66;margin:.5rem 0;font-size:.9rem}
   </style>
 </head>
 <body>
 <aside class="sidebar">
   <div class="logo">🏆 STUMBLE PRO</div>
+  <div style="text-align:center;margin-bottom:1rem">
+    <span id="lockStatus" class="locked-badge">🔒 LOCKED</span>
+  </div>
   <nav id="nav">
     <div class="nav-item active" data-p="dashboard">📊 Dashboard</div>
     <div class="nav-item" data-p="players">👥 Players</div>
     <div class="nav-item" data-p="leaderboard">🏅 Leaderboard</div>
-    <div class="nav-item" data-p="tournament">🏟️ Tournament</div>
-    <div class="nav-item" data-p="cup">🏆 Cup</div>
+    <div class="nav-item locked" data-p="tournament">🏟️ Tournament 🔒</div>
+    <div class="nav-item locked" data-p="cup">🏆 Cup 🔒</div>
     <div class="nav-item" data-p="hof">🏛️ Hall of Fame</div>
-    <div class="nav-item" data-p="admin">🔧 Admin</div>
+    <div class="nav-item" data-p="history">📜 History</div>
+    <div class="nav-item locked" data-p="admin">🔧 Admin 🔒</div>
+    <button class="unlock-btn" onclick="toggleLock()" style="width:100%;margin-top:1rem">🔑 Unlock Admin</button>
   </nav>
 </aside>
 <main class="main-panel" id="main"></main>
 
+<div id="passwordModal" style="display:none">
+  <div class="modal-box">
+    <h2 style="color:#d4af37">🔐 Admin Access</h2>
+    <p style="color:#888">Enter password to unlock admin features</p>
+    <input type="password" id="pwdInput" placeholder="Enter password" onkeypress="if(event.key==='Enter')checkPassword()">
+    <p class="error-msg" id="pwdError"></p>
+    <button onclick="checkPassword()" style="width:100%">🔓 Unlock</button>
+    <button onclick="closeModal()" style="background:#444;color:#fff;width:100%;margin-top:.5rem">Cancel</button>
+  </div>
+</div>
+
 <script>
-const K='slm_v3';
+// ============ PASSWORD SYSTEM ============
+const ADMIN_PASSWORD = "stumble2026"; // CHANGE THIS PASSWORD
+let isUnlocked = false;
+
+function toggleLock(){
+  if(isUnlocked){
+    isUnlocked = false;
+    updateLockUI();
+    render('dashboard');
+  }else{
+    document.getElementById('passwordModal').style.display = 'flex';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdError').textContent = '';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+function checkPassword(){
+  const input = document.getElementById('pwdInput').value;
+  if(input === ADMIN_PASSWORD){
+    isUnlocked = true;
+    document.getElementById('passwordModal').style.display = 'none';
+    updateLockUI();
+    alert('✅ Admin features unlocked!');
+    render('dashboard');
+  }else{
+    document.getElementById('pwdError').textContent = '❌ Wrong password! Try again.';
+    document.getElementById('pwdInput').value = '';
+  }
+}
+
+function closeModal(){
+  document.getElementById('passwordModal').style.display = 'none';
+}
+
+function updateLockUI(){
+  const status = document.getElementById('lockStatus');
+  const lockedItems = document.querySelectorAll('.nav-item.locked');
+  
+  if(isUnlocked){
+    status.className = 'unlocked-badge';
+    status.textContent = '🔓 UNLOCKED';
+    lockedItems.forEach(item => {
+      item.classList.remove('locked');
+      item.innerHTML = item.innerHTML.replace(' 🔒','');
+    });
+  }else{
+    status.className = 'locked-badge';
+    status.textContent = '🔒 LOCKED';
+    lockedItems.forEach(item => {
+      if(!item.classList.contains('locked')){
+        item.classList.add('locked');
+        if(!item.innerHTML.includes('🔒')) item.innerHTML += ' 🔒';
+      }
+    });
+  }
+}
+
+function isAdminAllowed(){
+  return isUnlocked;
+}
+
+// ============ DATABASE ============
+const K='slm_v4';
 if(!localStorage.getItem(K))localStorage.setItem(K,JSON.stringify({
   p:[
     {id:1,n:"Sankalp",u:"sankalp_op",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
@@ -56,28 +145,21 @@ if(!localStorage.getItem(K))localStorage.setItem(K,JSON.stringify({
 function g(){return JSON.parse(localStorage.getItem(K))}
 function s(d){localStorage.setItem(K,JSON.stringify(d))}
 
-// THE FIXED FUNCTION
 function updateStats(pos){
   let db=g();
   let pts={1:18,2:15,3:13,4:12,5:11};
   let ids=[...new Set(pos.map(x=>x.pid))];
-  
   ids.forEach(id=>{let p=db.p.find(x=>x.id===id);if(p)p.mp+=1;});
-  
   let w=pos.find(x=>x.place===1);
   if(w){let wp=db.p.find(x=>x.id===w.pid);if(wp){wp.w+=1;wp.mvp+=1;wp.st+=1;if(wp.st>wp.bs)wp.bs=wp.st;}}
-  
   pos.forEach(e=>{
     let p=db.p.find(x=>x.id===e.pid);if(!p)return;
     p.pts+=(pts[e.place]||0);
     if(e.place!==1){p.l+=1;p.st=0;}
   });
-  
   db.p.forEach(p=>{p.wr=p.mp>0?parseFloat(((p.w/p.mp)*100).toFixed(1)):0;});
-  
   let srt=[...db.p].sort((a,b)=>b.wr-a.wr||b.mvp-a.mvp||b.mp-a.mp);
   srt.forEach((p,i)=>{p.rk=i+1;if(!p.hr||p.rk<p.hr)p.hr=p.rk;});
-  
   db.p.forEach(p=>{
     if(p.tw>=1&&!p.ach.includes('t1'))p.ach.push('t1');
     if(p.tw>=5&&!p.ach.includes('t5'))p.ach.push('t5');
@@ -88,18 +170,24 @@ function updateStats(pos){
     if(p.mvp>=25&&!p.ach.includes('m25'))p.ach.push('m25');
     if(p.mvp>=50&&!p.ach.includes('m50'))p.ach.push('m50');
   });
-  
   if(db.p.length){db.hof.tk=[...db.p].sort((a,b)=>b.tw-a.tw)[0].id;db.hof.lp=[...db.p].sort((a,b)=>b.cw-a.cw)[0].id;db.hof.mm=[...db.p].sort((a,b)=>b.mvp-a.mvp)[0].id;}
-  
   s(db);
 }
 
-// NAVIGATION
+// NAVIGATION WITH PASSWORD CHECK
 document.querySelectorAll('.nav-item').forEach(el=>{
   el.addEventListener('click',function(){
+    const page = this.dataset.p;
+    const lockedPages = ['tournament','cup','admin'];
+    
+    if(lockedPages.includes(page) && !isAdminAllowed()){
+      alert('🔒 This feature is locked! Click "Unlock Admin" and enter password.');
+      return;
+    }
+    
     document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
     this.classList.add('active');
-    render(this.dataset.p);
+    render(page);
   });
 });
 
@@ -111,6 +199,7 @@ function render(pg){
   else if(pg==='tournament')tour(db);
   else if(pg==='cup')cup(db);
   else if(pg==='hof')hall(db);
+  else if(pg==='history')hist(db);
   else if(pg==='admin')adm(db);
 }
 
@@ -153,6 +242,7 @@ function lb(db){
 
 // TOURNAMENT
 function tour(db){
+  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2><p>Click "Unlock Admin" to access tournaments.</p></div>';return;}
   if(db.at) activeT(db);
   else createT(db);
 }
@@ -188,6 +278,7 @@ function activeT(db){
 }
 
 window.createTAct=()=>{
+  if(!isAdminAllowed())return;
   let db=g();
   let pids=[];document.querySelectorAll('.tp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
   if(pids.length<2)return alert('Need 2+');
@@ -196,19 +287,15 @@ window.createTAct=()=>{
 };
 
 window.subTM=()=>{
+  if(!isAdminAllowed())return;
   let db=g();
   let t=db.at;
   let pos=[];
   document.querySelectorAll('#tmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.tmp').value),place:parseInt(r.querySelector('.tml').value)});});
   if(pos.length<2)return alert('Need 2+');
-  
-  // FIXED: Update global stats FIRST
   updateStats(pos);
-  
-  // THEN re-read DB to get updated data
   db=g();
   t=db.at;
-  
   let w=pos.find(p=>p.place===1);
   if(w){let st=t.st.find(x=>x.pid===w.pid);if(st)st.mw++;}
   let pts={1:18,2:15,3:13,4:12,5:11};
@@ -216,11 +303,12 @@ window.subTM=()=>{
   t.mc++;t.cm++;
   if(t.cm>t.tm){t.done=true;t.winner=[...t.st].sort((a,b)=>b.mw-a.mw)[0].pid;}
   s(db);
-  alert('✅ Match recorded! Check leaderboard now.');
+  alert('✅ Match recorded! Check leaderboard.');
   tour(g());
 };
 
 window.finT=()=>{
+  if(!isAdminAllowed())return;
   let db=g();
   let t=db.at;
   let wp=db.p.find(p=>p.id===t.winner);
@@ -238,6 +326,7 @@ function thist(db){
 
 // CUP
 function cup(db){
+  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2><p>Click "Unlock Admin" to access cups.</p></div>';return;}
   if(db.ac) activeC(db);
   else createC(db);
 }
@@ -259,6 +348,7 @@ function activeC(db){
 }
 
 window.createCAct=()=>{
+  if(!isAdminAllowed())return;
   let db=g();
   let pids=[];document.querySelectorAll('.cp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
   if(pids.length<2)return alert('Need 2+');
@@ -266,13 +356,11 @@ window.createCAct=()=>{
 };
 
 window.subCup=()=>{
+  if(!isAdminAllowed())return;
   let pos=[];
   document.querySelectorAll('#cmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.cmp').value),place:parseInt(r.querySelector('.cml').value)});});
   if(pos.length<2)return alert('Need 2+');
-  
-  // FIXED: Update global stats
   updateStats(pos);
-  
   let db=g();
   let w=pos.find(p=>p.place===1);
   if(w){let wp=db.p.find(p=>p.id===w.pid);if(wp)wp.cw++;}
@@ -297,14 +385,28 @@ function hall(db){
     <div class="stat-box"><h3>⚡ Mythic Master</h3><p style="font-size:1.3rem"><b>${n(db.hof.mm)}</b></p></div></div>`;
 }
 
+function hist(db){
+  let h='<div class="card"><h2>📜 History</h2>';
+  if(db.t.length){h+='<h3>Tournaments</h3>';db.t.slice().reverse().forEach(t=>{let w=db.p.find(p=>p.id===t.winner);h+=`<p>🏆 ${t.name} - ${w?.n}</p>`;});}
+  if(db.c.length){h+='<h3>Cups</h3>';db.c.slice().reverse().forEach(c=>{let w=db.p.find(p=>p.id===c.winner);h+=`<p>🥤 ${c.type} - ${w?.n}</p>`;});}
+  document.getElementById('main').innerHTML=h+'</div>';
+}
+
 function adm(db){
+  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2><p>Click "Unlock Admin" to access admin panel.</p></div>';return;}
   document.getElementById('main').innerHTML=`<div class="card"><h2>🔧 Admin</h2>
+    <p style="color:#4c4;margin-bottom:1rem">✅ Admin mode active</p>
     <button onclick="exp()">📤 Export JSON</button>
     <input type="file" id="imf" accept=".json"><button onclick="imp()">📥 Import</button>
+    <button onclick="changePwd()">🔑 Change Password</button>
     <button onclick="rst()" style="background:#c44;color:#fff">⚠️ Reset</button></div>`;
   window.exp=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(g(),null,2)],{type:'application/json'}));a.download='stumble_backup.json';a.click();};
   window.imp=()=>{let f=document.getElementById('imf').files[0];if(!f)return;let r=new FileReader();r.onload=e=>{localStorage.setItem(K,e.target.result);location.reload();};r.readAsText(f);};
   window.rst=()=>{if(confirm('Delete all?')){localStorage.removeItem(K);location.reload();}};
+  window.changePwd=()=>{
+    let np=prompt('Enter new admin password:');
+    if(np&&np.length>=4){ADMIN_PASSWORD=np;alert('✅ Password changed to: '+np);}else{alert('Password too short!');}
+  };
 }
 
 render('dashboard');
