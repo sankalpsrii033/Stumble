@@ -5,431 +5,309 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stumble League Manager Pro</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0e14; font-family: 'Segoe UI', sans-serif; color: #e0e0e0; display: flex; min-height: 100vh; }
-    .sidebar { width: 250px; background: #11161e; border-right: 2px solid #d4af37; padding: 1.5rem; position: sticky; top: 0; height: 100vh; }
-    .logo { font-size: 1.6rem; font-weight: 800; color: #d4af37; margin-bottom: 2rem; text-align: center; }
-    .nav-item { padding: 0.8rem; margin: 0.3rem 0; border-radius: 8px; cursor: pointer; color: #888; font-weight: 600; }
-    .nav-item:hover, .nav-item.active { background: rgba(212,175,55,0.15); color: #d4af37; }
-    .main-panel { flex: 1; padding: 2rem; overflow-y: auto; }
-    .card { background: #11161e; border: 1px solid #2a3040; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-    h2 { color: #d4af37; margin-bottom: 1rem; }
-    h3 { color: #e0b040; margin: 1rem 0; }
-    button { background: #d4af37; color: #000; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; margin: 0.3rem; }
-    button:hover { background: #e8c550; }
-    select, input { background: #0a0e14; border: 1px solid #2a3040; color: #fff; padding: 0.5rem; border-radius: 6px; margin: 0.2rem; }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #d4af37; padding: 0.7rem; border-bottom: 2px solid #d4af37; }
-    td { padding: 0.7rem; border-bottom: 1px solid #1a2030; }
-    .stat-box { background: #0a0e14; border: 1px solid #2a3040; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
-    .player-row { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0; padding: 0.5rem; background: #0a0e14; border-radius: 8px; }
-    .badge { background: #d4af37; color: #000; padding: 0.2rem 0.7rem; border-radius: 12px; font-weight: bold; font-size: 0.85rem; }
-    label { display: inline-block; margin: 0.2rem 0.8rem; cursor: pointer; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0e14;font-family:'Segoe UI',sans-serif;color:#e0e0e0;display:flex;min-height:100vh}
+    .sidebar{width:250px;background:#11161e;border-right:2px solid #d4af37;padding:1.5rem;position:sticky;top:0;height:100vh}
+    .logo{font-size:1.6rem;font-weight:800;color:#d4af37;text-align:center;margin-bottom:2rem}
+    .nav-item{padding:.8rem;margin:.3rem 0;border-radius:8px;cursor:pointer;color:#888;font-weight:600}
+    .nav-item:hover,.nav-item.active{background:rgba(212,175,55,0.15);color:#d4af37}
+    .main-panel{flex:1;padding:2rem;overflow-y:auto}
+    .card{background:#11161e;border:1px solid #2a3040;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+    h2{color:#d4af37;margin-bottom:1rem}
+    h3{color:#e0b040;margin:1rem 0}
+    button{background:#d4af37;color:#000;border:none;padding:.6rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;margin:.3rem}
+    button:hover{background:#e8c550}
+    select,input{background:#0a0e14;border:1px solid #2a3040;color:#fff;padding:.5rem;border-radius:6px;margin:.2rem}
+    table{width:100%;border-collapse:collapse;margin:1rem 0}
+    th{text-align:left;color:#d4af37;padding:.7rem;border-bottom:2px solid #d4af37}
+    td{padding:.7rem;border-bottom:1px solid #1a2030}
+    .stat-box{background:#0a0e14;border:1px solid #2a3040;border-radius:8px;padding:1rem;margin:.5rem 0}
+    .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem}
+    .badge{background:#d4af37;color:#000;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.85rem}
   </style>
 </head>
 <body>
-  <aside class="sidebar">
-    <div class="logo">🏆 STUMBLE PRO</div>
-    <nav id="navLinks">
-      <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
-      <div class="nav-item" data-page="players">👥 Players</div>
-      <div class="nav-item" data-page="leaderboard">🏅 Leaderboard</div>
-      <div class="nav-item" data-page="tournament">🏟️ Tournaments</div>
-      <div class="nav-item" data-page="cup">🏆 Cups</div>
-      <div class="nav-item" data-page="achievements">🌟 Achievements</div>
-      <div class="nav-item" data-page="halloffame">🏛️ Hall of Fame</div>
-      <div class="nav-item" data-page="history">📜 History</div>
-      <div class="nav-item" data-page="admin">🔧 Admin</div>
-    </nav>
-  </aside>
-  <main class="main-panel" id="mainContent"></main>
+<aside class="sidebar">
+  <div class="logo">🏆 STUMBLE PRO</div>
+  <nav id="nav">
+    <div class="nav-item active" data-p="dashboard">📊 Dashboard</div>
+    <div class="nav-item" data-p="players">👥 Players</div>
+    <div class="nav-item" data-p="leaderboard">🏅 Leaderboard</div>
+    <div class="nav-item" data-p="tournament">🏟️ Tournament</div>
+    <div class="nav-item" data-p="cup">🏆 Cup</div>
+    <div class="nav-item" data-p="hof">🏛️ Hall of Fame</div>
+    <div class="nav-item" data-p="admin">🔧 Admin</div>
+  </nav>
+</aside>
+<main class="main-panel" id="main"></main>
 
-  <script>
-    // ========== DATABASE ==========
-    const DB_KEY = 'stumble_pro_final';
-    
-    function createFreshDB() {
-      return {
-        players: [
-          { id:1, name:"Sankalp", username:"sankalp_op", mp:0, w:0, l:0, wr:0, pts:0, mvp:0, tw:0, cw:0, rank:5, highRank:5, streak:0, bestStreak:0, ach:[] },
-          { id:2, name:"Akshat Rakesh", username:"terrorbebu", mp:0, w:0, l:0, wr:0, pts:0, mvp:0, tw:0, cw:0, rank:5, highRank:5, streak:0, bestStreak:0, ach:[] },
-          { id:3, name:"Atharva Mishra", username:"panditdabang", mp:0, w:0, l:0, wr:0, pts:0, mvp:0, tw:0, cw:0, rank:5, highRank:5, streak:0, bestStreak:0, ach:[] },
-          { id:4, name:"Nayan Mehrotra", username:"nbot", mp:0, w:0, l:0, wr:0, pts:0, mvp:0, tw:0, cw:0, rank:5, highRank:5, streak:0, bestStreak:0, ach:[] },
-          { id:5, name:"Yugank Dwivedi", username:"yuggu", mp:0, w:0, l:0, wr:0, pts:0, mvp:0, tw:0, cw:0, rank:5, highRank:5, streak:0, bestStreak:0, ach:[] }
-        ],
-        tournaments: [],
-        cups: [],
-        activeT: null,
-        activeCup: null,
-        hof: { tk:null, lp:null, mm:null }
-      };
-    }
-    
-    if(!localStorage.getItem(DB_KEY)) localStorage.setItem(DB_KEY, JSON.stringify(createFreshDB()));
-    
-    function DB() { return JSON.parse(localStorage.getItem(DB_KEY)); }
-    function save(db) { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
-    
-    // ========== THE CORE FUNCTION - THIS IS WHAT UPDATES EVERYTHING ==========
-    function updateAllStats(positions) {
-      const db = DB();
-      const points = {1:18, 2:15, 3:13, 4:12, 5:11};
-      const ids = [...new Set(positions.map(p=>p.pid))];
-      
-      // Add match played to all
-      ids.forEach(id => {
-        const p = db.players.find(x=>x.id===id);
-        if(p) p.mp += 1;
-      });
-      
-      // Winner gets win + MVP
-      const winner = positions.find(p=>p.place===1);
-      if(winner) {
-        const wp = db.players.find(x=>x.id===winner.pid);
-        if(wp) {
-          wp.w += 1;
-          wp.mvp += 1;
-          wp.streak += 1;
-          if(wp.streak > wp.bestStreak) wp.bestStreak = wp.streak;
-        }
-      }
-      
-      // Process all positions
-      positions.forEach(entry => {
-        const p = db.players.find(x=>x.id===entry.pid);
-        if(!p) return;
-        p.pts += (points[entry.place] || 0);
-        if(entry.place !== 1) {
-          p.l += 1;
-          p.streak = 0;
-        }
-      });
-      
-      // CALCULATE WIN RATES
-      db.players.forEach(p => {
-        p.wr = p.mp > 0 ? parseFloat(((p.w / p.mp) * 100).toFixed(1)) : 0;
-      });
-      
-      // RANK PLAYERS
-      const sorted = [...db.players].sort((a,b) => {
-        if(b.wr !== a.wr) return b.wr - a.wr;
-        if(b.mvp !== a.mvp) return b.mvp - a.mvp;
-        return b.mp - a.mp;
-      });
-      
-      sorted.forEach((p,i) => {
-        p.rank = i + 1;
-        if(!p.highRank || p.rank < p.highRank) p.highRank = p.rank;
-      });
-      
-      // Achievements
-      db.players.forEach(p => {
-        const checks = [
-          [p.tw>=1,'t1'],[p.tw>=5,'t5'],[p.tw>=10,'t10'],[p.tw>=25,'tk'],
-          [p.cw>=1,'c1'],[p.cw>=10,'c10'],[p.cw>=25,'cl'],
-          [p.mvp>=1,'m1'],[p.mvp>=25,'m25'],[p.mvp>=50,'m50'],[p.mvp>=100,'mg']
-        ];
-        checks.forEach(([cond,key]) => { if(cond && !p.ach.includes(key)) p.ach.push(key); });
-      });
-      
-      // Hall of Fame
-      if(db.players.length > 0) {
-        db.hof.tk = [...db.players].sort((a,b)=>b.tw-a.tw)[0].id;
-        db.hof.lp = [...db.players].sort((a,b)=>b.cw-a.cw)[0].id;
-        db.hof.mm = [...db.players].sort((a,b)=>b.mvp-a.mvp)[0].id;
-      }
-      
-      save(db);
-      return db;
-    }
-    
-    // ========== NAVIGATION ==========
-    const main = document.getElementById('mainContent');
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', function() {
-        document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-        this.classList.add('active');
-        render(this.dataset.page);
-      });
-    });
-    
-    function render(page) {
-      const db = DB();
-      if(page==='dashboard') dash(db);
-      else if(page==='players') players(db);
-      else if(page==='leaderboard') leaderboard(db);
-      else if(page==='tournament') tournament(db);
-      else if(page==='cup') cup(db);
-      else if(page==='achievements') achievements(db);
-      else if(page==='halloffame') hof(db);
-      else if(page==='history') history(db);
-      else if(page==='admin') admin(db);
-    }
-    
-    function dash(db) {
-      const totalMatches = db.tournaments.reduce((s,t)=>s+(t.mc||0),0) + db.cups.length;
-      const top = [...db.players].sort((a,b)=>a.rank-b.rank)[0];
-      main.innerHTML = `<div class="card"><h2>📊 Dashboard</h2>
-        <div class="grid-3">
-          <div class="stat-box">👥 Players<br><b style="font-size:1.5rem;color:#d4af37">${db.players.length}</b></div>
-          <div class="stat-box">⚔️ All Matches<br><b style="font-size:1.5rem;color:#d4af37">${totalMatches}</b></div>
-          <div class="stat-box">🏟️ Tournaments<br><b style="font-size:1.5rem;color:#d4af37">${db.tournaments.length}</b></div>
-          <div class="stat-box">🏆 Cups<br><b style="font-size:1.5rem;color:#d4af37">${db.cups.length}</b></div>
-          <div class="stat-box">🥇 #1 Player<br><b style="font-size:1.2rem;color:#d4af37">${top?.name||'N/A'}</b></div>
-        </div></div>`;
-    }
-    
-    function players(db) {
-      const sorted = [...db.players].sort((a,b)=>a.rank-b.rank);
-      let html = '<div class="card"><h2>👥 Players</h2>';
-      sorted.forEach(p => {
-        html += `<div class="stat-box">
-          <b>${p.name}</b> <span class="badge">#${p.rank}</span> (@${p.username})<br>
-          Matches: ${p.mp} | Wins: ${p.w} | Losses: ${p.l} | <b style="color:#d4af37">WR: ${p.wr}%</b><br>
-          MVPs: ${p.mvp} | Points: ${p.pts} | Streak: ${p.streak}<br>
-          🏆 Tourney Wins: ${p.tw} | 🥤 Cup Wins: ${p.cw}
-        </div>`;
-      });
-      main.innerHTML = html + '</div>';
-    }
-    
-    function leaderboard(db) {
-      const sorted = [...db.players].sort((a,b)=>a.rank-b.rank);
-      let rows = sorted.map((p,i) => {
-        const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-        return `<tr${i===0?' style="background:rgba(212,175,55,0.1)"':''}>
-          <td>${medal} #${p.rank}</td><td><b>${p.name}</b></td>
-          <td><b style="color:#d4af37;font-size:1.1rem">${p.wr}%</b></td>
-          <td>${p.mvp}</td><td>${p.mp}</td><td>${p.w}W/${p.l}L</td></tr>`;
-      }).join('');
-      main.innerHTML = `<div class="card"><h2>🏅 Leaderboard</h2>
-        <p style="color:#d4af37">Ranked by: Win Rate → MVP → Matches</p>
-        <table><thead><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th><th>W/L</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>`;
-    }
-    
-    // ========== TOURNAMENT SYSTEM ==========
-    function tournament(db) {
-      if(db.activeT) showActiveTournament(db);
-      else showCreateTournament(db);
-    }
-    
-    function showCreateTournament(db) {
-      const checks = db.players.map(p => `<label><input type="checkbox" class="tp" value="${p.id}" checked> ${p.name}</label><br>`).join('');
-      main.innerHTML = `<div class="card"><h2>🏟️ Create Tournament</h2>
-        <input type="text" id="tn" value="Championship" placeholder="Name" style="width:100%"><br><br>
-        Maps per match: <input type="number" id="tm" value="5" min="5" max="10">
-        Total matches: <input type="number" id="tc" value="3" min="3" max="10"><br><br>
-        <div class="stat-box"><h3>Participants:</h3>${checks}</div>
-        <button onclick="createT()" style="width:100%">Create Tournament</button></div>
-        ${db.tournaments.length ? thistory(db) : ''}`;
-    }
-    
-    function showActiveTournament(db) {
-      const t = db.activeT;
-      const nm = {}; db.players.forEach(p=>nm[p.id]=p.name);
-      const opts = t.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
-      
-      let html = `<div class="card"><h2>🏟️ ${t.name}</h2>
-        <p>Match ${t.cm} of ${t.tm} | Maps: ${t.maps}</p>
-        <h3>Standings</h3><table><tr><th>Player</th><th>Wins</th><th>Points</th></tr>`;
-      
-      [...t.standings].sort((a,b)=>b.mw-a.mw||b.tp-a.tp).forEach(s => {
-        html += `<tr><td>${nm[s.pid]}</td><td><b>${s.mw}</b></td><td>${s.tp}</td></tr>`;
-      });
-      
-      html += '</table>';
-      
-      if(!t.done) {
-        html += `<h3>Match #${t.cm} Results</h3>
-          <p style="color:#d4af37">This updates global stats & leaderboard!</p>
-          <div id="tmc"></div>
-          <button onclick="addTMRow()">+ Player</button>
-          <button onclick="submitTM()">✅ Submit Match</button>`;
-      } else {
-        html += `<p style="font-size:1.3rem;color:#d4af37">👑 Champion: ${nm[t.winner]}</p>
-          <button onclick="finishT()">Save & Close Tournament</button>`;
-      }
-      
-      html += '</div>';
-      main.innerHTML = html;
-      
-      window.addTMRow = function() {
-        document.getElementById('tmc').innerHTML += `<div class="player-row">
-          <select class="tmp">${opts}</select>
-          <select class="tml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;
-      };
-    }
-    
-    window.createT = function() {
-      const db = DB();
-      const pids = []; document.querySelectorAll('.tp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
-      if(pids.length<2) return alert('Need 2+ players');
-      db.activeT = {
-        name: document.getElementById('tn').value||'Tournament',
-        maps: parseInt(document.getElementById('tm').value)||5,
-        tm: parseInt(document.getElementById('tc').value)||3,
-        pids, cm:1, done:false, winner:null, mc:0,
-        standings: pids.map(id=>({pid:id, mw:0, tp:0}))
-      };
-      save(db);
-      tournament(DB());
-    };
-    
-    window.submitTM = function() {
-      const db = DB();
-      const t = db.activeT;
-      const positions = [];
-      document.querySelectorAll('#tmc .player-row').forEach(row => {
-        positions.push({
-          pid: parseInt(row.querySelector('.tmp').value),
-          place: parseInt(row.querySelector('.tml').value)
-        });
-      });
-      if(positions.length<2) return alert('Need 2+ players');
-      
-      // THIS CALL UPDATES EVERYTHING
-      updateAllStats(positions);
-      
-      // Update tournament
-      const w = positions.find(p=>p.place===1);
-      if(w) { const s = t.standings.find(x=>x.pid===w.pid); if(s) s.mw++; }
-      positions.forEach(e => {
-        const s = t.standings.find(x=>x.pid===e.pid);
-        if(s) s.tp += ({1:18,2:15,3:13,4:12,5:11})[e.place]||0;
-      });
-      t.mc++; t.cm++;
-      if(t.cm > t.tm) { t.done=true; t.winner=[...t.standings].sort((a,b)=>b.mw-a.mw)[0].pid; }
-      save(db);
-      alert('✅ Match recorded! Check leaderboard.');
-      tournament(DB());
-    };
-    
-    window.finishT = function() {
-      const db = DB();
-      const t = db.activeT;
-      const wp = db.players.find(p=>p.id===t.winner);
-      if(wp) wp.tw++;
-      db.tournaments.push({name:t.name, winner:t.winner, date:new Date().toISOString(), mc:t.mc});
-      db.activeT = null;
-      save(db);
-      tournament(DB());
-    };
-    
-    function thistory(db) {
-      let h = '<div class="card"><h3>Tournament History</h3>';
-      db.tournaments.slice().reverse().forEach(t => {
-        const w = db.players.find(p=>p.id===t.winner);
-        h += `<p>🏆 ${t.name} - ${w?.name} (${t.mc} matches)</p>`;
-      });
-      return h+'</div>';
-    }
-    
-    // ========== CUP SYSTEM ==========
-    function cup(db) {
-      if(db.activeCup) showActiveCup(db);
-      else showCreateCup(db);
-    }
-    
-    function showCreateCup(db) {
-      const checks = db.players.map(p => `<label><input type="checkbox" class="cp" value="${p.id}" checked> ${p.name}</label><br>`).join('');
-      main.innerHTML = `<div class="card"><h2>🏆 Cup (10 Maps)</h2>
-        <div class="stat-box"><h3>Participants:</h3>${checks}</div>
-        <button onclick="createCup()" style="width:100%">Create Cup</button></div>
-        ${db.cups.length ? chistory(db) : ''}`;
-    }
-    
-    function showActiveCup(db) {
-      const nm = {}; db.players.forEach(p=>nm[p.id]=p.name);
-      const opts = db.activeCup.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
-      main.innerHTML = `<div class="card"><h2>🏆 Cup Match</h2>
-        <div id="cmc"></div>
-        <button onclick="addCRow()">+ Player</button>
-        <button onclick="submitCup()">🏁 Submit Cup</button></div>`;
-      window.addCRow = function() {
-        document.getElementById('cmc').innerHTML += `<div class="player-row">
-          <select class="cmp">${opts}</select>
-          <select class="cml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;
-      };
-    }
-    
-    window.createCup = function() {
-      const db = DB();
-      const pids = []; document.querySelectorAll('.cp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
-      if(pids.length<2) return alert('Need 2+ players');
-      db.activeCup = {pids};
-      save(db);
-      cup(DB());
-    };
-    
-    window.submitCup = function() {
-      const db = DB();
-      const positions = [];
-      document.querySelectorAll('#cmc .player-row').forEach(row => {
-        positions.push({
-          pid: parseInt(row.querySelector('.cmp').value),
-          place: parseInt(row.querySelector('.cml').value)
-        });
-      });
-      if(positions.length<2) return alert('Need 2+ players');
-      
-      // UPDATE GLOBAL STATS
-      updateAllStats(positions);
-      
-      const w = positions.find(p=>p.place===1);
-      if(w) { const wp = db.players.find(p=>p.id===w.pid); if(wp) wp.cw++; }
-      db.cups.push({type:'League Cup (10 Maps)', winner:w?.pid, date:new Date().toISOString()});
-      db.activeCup = null;
-      save(db);
-      alert('✅ Cup done! Leaderboard updated.');
-      cup(DB());
-    };
-    
-    function chistory(db) {
-      let h = '<div class="card"><h3>Cup History</h3>';
-      db.cups.slice().reverse().forEach(c => {
-        const w = db.players.find(p=>p.id===c.winner);
-        h += `<p>🥤 ${c.type} - ${w?.name}</p>`;
-      });
-      return h+'</div>';
-    }
-    
-    function achievements(db) {
-      const names = {t1:'🏆 First Tournament Win',t5:'🏆 5 Tourneys',t10:'🏆 10 Tourneys',tk:'👑 Tournament King',c1:'🥇 First Cup',c10:'🏅 10 Cups',cl:'🌟 Cup Legend',m1:'⭐ First MVP',m25:'⭐ 25 MVPs',m50:'⭐ 50 MVPs',mg:'⚡ MVP God'};
-      let html = '<div class="card"><h2>🌟 Achievements</h2>';
-      db.players.forEach(p => {
-        html += `<div class="stat-box"><b>${p.name}</b> (${p.mvp} MVPs)<br>${p.ach.length?p.ach.map(a=>names[a]||a).join(' | '):'None'}</div>`;
-      });
-      main.innerHTML = html+'</div>';
-    }
-    
-    function hof(db) {
-      const n = id => db.players.find(p=>p.id===id)?.name||'—';
-      main.innerHTML = `<div class="card"><h2>🏛️ Hall of Fame</h2>
-        <div class="stat-box"><h3>🏆 Tournament King</h3><p style="font-size:1.3rem"><b>${n(db.hof.tk)}</b></p></div>
-        <div class="stat-box"><h3>🌟 Legendary Player</h3><p style="font-size:1.3rem"><b>${n(db.hof.lp)}</b></p></div>
-        <div class="stat-box"><h3>⚡ Mythic Master</h3><p style="font-size:1.3rem"><b>${n(db.hof.mm)}</b></p></div></div>`;
-    }
-    
-    function history(db) {
-      let html = '<div class="card"><h2>📜 History</h2>';
-      if(db.tournaments.length) { html += '<h3>Tournaments</h3>'; db.tournaments.slice().reverse().forEach(t=>{const w=db.players.find(p=>p.id===t.winner);html+=`<p>🏆 ${t.name} - ${w?.name}</p>`;}); }
-      if(db.cups.length) { html += '<h3>Cups</h3>'; db.cups.slice().reverse().forEach(c=>{const w=db.players.find(p=>p.id===c.winner);html+=`<p>🥤 ${c.type} - ${w?.name}</p>`;}); }
-      main.innerHTML = html+'</div>';
-    }
-    
-    function admin(db) {
-      main.innerHTML = `<div class="card"><h2>🔧 Admin</h2>
-        <button onclick="exportDB()">📤 Export JSON</button>
-        <input type="file" id="imf" accept=".json"><button onclick="importDB()">📥 Import</button>
-        <button onclick="resetDB()" style="background:#c44;color:#fff">⚠️ Reset All</button></div>`;
-      window.exportDB = ()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB(),null,2)],{type:'application/json'}));a.download='stumble_backup.json';a.click();};
-      window.importDB = ()=>{const f=document.getElementById('imf').files[0];if(!f)return;const r=new FileReader();r.onload=e=>{localStorage.setItem(DB_KEY,e.target.result);location.reload();};r.readAsText(f);};
-      window.resetDB = ()=>{if(confirm('Delete all?')){localStorage.removeItem(DB_KEY);location.reload();}};
-    }
-    
+<script>
+const K='slm_v3';
+if(!localStorage.getItem(K))localStorage.setItem(K,JSON.stringify({
+  p:[
+    {id:1,n:"Sankalp",u:"sankalp_op",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
+    {id:2,n:"Akshat Rakesh",u:"terrorbebu",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
+    {id:3,n:"Atharva Mishra",u:"panditdabang",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
+    {id:4,n:"Nayan Mehrotra",u:"nbot",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
+    {id:5,n:"Yugank Dwivedi",u:"yuggu",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]}
+  ],t:[],c:[],at:null,ac:null,hof:{tk:null,lp:null,mm:null}
+}));
+
+function g(){return JSON.parse(localStorage.getItem(K))}
+function s(d){localStorage.setItem(K,JSON.stringify(d))}
+
+// THE FIXED FUNCTION
+function updateStats(pos){
+  let db=g();
+  let pts={1:18,2:15,3:13,4:12,5:11};
+  let ids=[...new Set(pos.map(x=>x.pid))];
+  
+  ids.forEach(id=>{let p=db.p.find(x=>x.id===id);if(p)p.mp+=1;});
+  
+  let w=pos.find(x=>x.place===1);
+  if(w){let wp=db.p.find(x=>x.id===w.pid);if(wp){wp.w+=1;wp.mvp+=1;wp.st+=1;if(wp.st>wp.bs)wp.bs=wp.st;}}
+  
+  pos.forEach(e=>{
+    let p=db.p.find(x=>x.id===e.pid);if(!p)return;
+    p.pts+=(pts[e.place]||0);
+    if(e.place!==1){p.l+=1;p.st=0;}
+  });
+  
+  db.p.forEach(p=>{p.wr=p.mp>0?parseFloat(((p.w/p.mp)*100).toFixed(1)):0;});
+  
+  let srt=[...db.p].sort((a,b)=>b.wr-a.wr||b.mvp-a.mvp||b.mp-a.mp);
+  srt.forEach((p,i)=>{p.rk=i+1;if(!p.hr||p.rk<p.hr)p.hr=p.rk;});
+  
+  db.p.forEach(p=>{
+    if(p.tw>=1&&!p.ach.includes('t1'))p.ach.push('t1');
+    if(p.tw>=5&&!p.ach.includes('t5'))p.ach.push('t5');
+    if(p.tw>=10&&!p.ach.includes('t10'))p.ach.push('t10');
+    if(p.cw>=1&&!p.ach.includes('c1'))p.ach.push('c1');
+    if(p.cw>=10&&!p.ach.includes('c10'))p.ach.push('c10');
+    if(p.mvp>=1&&!p.ach.includes('m1'))p.ach.push('m1');
+    if(p.mvp>=25&&!p.ach.includes('m25'))p.ach.push('m25');
+    if(p.mvp>=50&&!p.ach.includes('m50'))p.ach.push('m50');
+  });
+  
+  if(db.p.length){db.hof.tk=[...db.p].sort((a,b)=>b.tw-a.tw)[0].id;db.hof.lp=[...db.p].sort((a,b)=>b.cw-a.cw)[0].id;db.hof.mm=[...db.p].sort((a,b)=>b.mvp-a.mvp)[0].id;}
+  
+  s(db);
+}
+
+// NAVIGATION
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',function(){
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    render(this.dataset.p);
+  });
+});
+
+function render(pg){
+  let db=g();
+  if(pg==='dashboard')dash(db);
+  else if(pg==='players')plist(db);
+  else if(pg==='leaderboard')lb(db);
+  else if(pg==='tournament')tour(db);
+  else if(pg==='cup')cup(db);
+  else if(pg==='hof')hall(db);
+  else if(pg==='admin')adm(db);
+}
+
+function dash(db){
+  let tm=db.t.reduce((a,b)=>a+(b.mc||0),0)+db.c.length;
+  let top=[...db.p].sort((a,b)=>a.rk-b.rk)[0];
+  document.getElementById('main').innerHTML=`<div class="card"><h2>📊 Dashboard</h2><div class="grid-3">
+    <div class="stat-box">👥 Players<br><b style="font-size:1.5rem;color:#d4af37">${db.p.length}</b></div>
+    <div class="stat-box">⚔️ Matches<br><b style="font-size:1.5rem;color:#d4af37">${tm}</b></div>
+    <div class="stat-box">🏟️ Tournaments<br><b style="font-size:1.5rem;color:#d4af37">${db.t.length}</b></div>
+    <div class="stat-box">🏆 Cups<br><b style="font-size:1.5rem;color:#d4af37">${db.c.length}</b></div>
+    <div class="stat-box">🥇 #1<br><b style="font-size:1.2rem;color:#d4af37">${top?.n||'N/A'}</b></div>
+  </div></div>`;
+}
+
+function plist(db){
+  let h='<div class="card"><h2>👥 Players</h2>';
+  [...db.p].sort((a,b)=>a.rk-b.rk).forEach(p=>{
+    h+=`<div class="stat-box"><b>${p.n}</b> <span class="badge">#${p.rk}</span> (@${p.u})<br>
+    Matches: ${p.mp} | Wins: ${p.w} | Losses: ${p.l} | <b style="color:#d4af37">WR: ${p.wr}%</b><br>
+    MVPs: ${p.mvp} | Points: ${p.pts} | Streak: ${p.st}<br>
+    🏆 Tourney Wins: ${p.tw} | 🥤 Cup Wins: ${p.cw}</div>`;
+  });
+  document.getElementById('main').innerHTML=h+'</div>';
+}
+
+function lb(db){
+  let rows=[...db.p].sort((a,b)=>a.rk-b.rk).map((p,i)=>{
+    let m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    return `<tr${i===0?' style="background:rgba(212,175,55,0.1)"':''}>
+      <td>${m} #${p.rk}</td><td><b>${p.n}</b></td>
+      <td><b style="color:#d4af37;font-size:1.1rem">${p.wr}%</b></td>
+      <td>${p.mvp}</td><td>${p.mp}</td><td>${p.w}W/${p.l}L</td></tr>`;
+  }).join('');
+  document.getElementById('main').innerHTML=`<div class="card"><h2>🏅 Leaderboard</h2>
+    <p style="color:#d4af37">Ranked by: Win Rate → MVP → Matches</p>
+    <table><thead><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th><th>W/L</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+// TOURNAMENT
+function tour(db){
+  if(db.at) activeT(db);
+  else createT(db);
+}
+
+function createT(db){
+  let cks=db.p.map(p=>`<label><input type="checkbox" class="tp" value="${p.id}" checked> ${p.n}</label><br>`).join('');
+  document.getElementById('main').innerHTML=`<div class="card"><h2>🏟️ Create Tournament</h2>
+    <input id="tn" value="Championship" style="width:100%"><br><br>
+    Maps: <input id="tm" value="5" min="5" max="10" type="number">
+    Matches: <input id="tc" value="3" min="3" max="10" type="number"><br><br>
+    <div class="stat-box"><h3>Participants:</h3>${cks}</div>
+    <button onclick="createTAct()" style="width:100%">Create</button></div>
+    ${db.t.length?thist(db):''}`;
+}
+
+function activeT(db){
+  let t=db.at;
+  let nm={};db.p.forEach(p=>nm[p.id]=p.n);
+  let opts=t.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
+  let h=`<div class="card"><h2>🏟️ ${t.name}</h2><p>Match ${t.cm}/${t.tm} | Maps: ${t.maps}</p>
+    <h3>Standings</h3><table><tr><th>Player</th><th>Wins</th><th>Points</th></tr>`;
+  [...t.st].sort((a,b)=>b.mw-a.mw).forEach(s=>{h+=`<tr><td>${nm[s.pid]}</td><td><b>${s.mw}</b></td><td>${s.tp}</td></tr>`;});
+  h+='</table>';
+  if(!t.done){
+    h+=`<h3>Match #${t.cm}</h3><p style="color:#d4af37">⚠️ Updates leaderboard!</p><div id="tmc"></div>
+      <button onclick="addTR()">+ Player</button><button onclick="subTM()">✅ Submit</button>`;
+  }else{
+    h+=`<p style="font-size:1.3rem;color:#d4af37">👑 Champion: ${nm[t.winner]}</p><button onclick="finT()">Save</button>`;
+  }
+  h+='</div>';
+  document.getElementById('main').innerHTML=h;
+  window.addTR=()=>{document.getElementById('tmc').innerHTML+=`<div><select class="tmp">${opts}</select><select class="tml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;};
+}
+
+window.createTAct=()=>{
+  let db=g();
+  let pids=[];document.querySelectorAll('.tp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
+  if(pids.length<2)return alert('Need 2+');
+  db.at={name:document.getElementById('tn').value||'T',maps:parseInt(document.getElementById('tm').value)||5,tm:parseInt(document.getElementById('tc').value)||3,pids,cm:1,done:false,winner:null,mc:0,st:pids.map(id=>({pid:id,mw:0,tp:0}))};
+  s(db);tour(g());
+};
+
+window.subTM=()=>{
+  let db=g();
+  let t=db.at;
+  let pos=[];
+  document.querySelectorAll('#tmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.tmp').value),place:parseInt(r.querySelector('.tml').value)});});
+  if(pos.length<2)return alert('Need 2+');
+  
+  // FIXED: Update global stats FIRST
+  updateStats(pos);
+  
+  // THEN re-read DB to get updated data
+  db=g();
+  t=db.at;
+  
+  let w=pos.find(p=>p.place===1);
+  if(w){let st=t.st.find(x=>x.pid===w.pid);if(st)st.mw++;}
+  let pts={1:18,2:15,3:13,4:12,5:11};
+  pos.forEach(e=>{let st=t.st.find(x=>x.pid===e.pid);if(st)st.tp+=(pts[e.place]||0);});
+  t.mc++;t.cm++;
+  if(t.cm>t.tm){t.done=true;t.winner=[...t.st].sort((a,b)=>b.mw-a.mw)[0].pid;}
+  s(db);
+  alert('✅ Match recorded! Check leaderboard now.');
+  tour(g());
+};
+
+window.finT=()=>{
+  let db=g();
+  let t=db.at;
+  let wp=db.p.find(p=>p.id===t.winner);
+  if(wp)wp.tw++;
+  db.t.push({name:t.name,winner:t.winner,date:new Date().toISOString(),mc:t.mc});
+  db.at=null;
+  s(db);tour(g());
+};
+
+function thist(db){
+  let h='<div class="card"><h3>History</h3>';
+  db.t.slice().reverse().forEach(t=>{let w=db.p.find(p=>p.id===t.winner);h+=`<p>🏆 ${t.name} - ${w?.n} (${t.mc}m)</p>`;});
+  return h+'</div>';
+}
+
+// CUP
+function cup(db){
+  if(db.ac) activeC(db);
+  else createC(db);
+}
+
+function createC(db){
+  let cks=db.p.map(p=>`<label><input type="checkbox" class="cp" value="${p.id}" checked> ${p.n}</label><br>`).join('');
+  document.getElementById('main').innerHTML=`<div class="card"><h2>🏆 Cup (10 Maps)</h2>
+    <div class="stat-box"><h3>Participants:</h3>${cks}</div>
+    <button onclick="createCAct()" style="width:100%">Create Cup</button></div>
+    ${db.c.length?chist(db):''}`;
+}
+
+function activeC(db){
+  let nm={};db.p.forEach(p=>nm[p.id]=p.n);
+  let opts=db.ac.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
+  document.getElementById('main').innerHTML=`<div class="card"><h2>🏆 Cup Match</h2><div id="cmc"></div>
+    <button onclick="addCR()">+ Player</button><button onclick="subCup()">🏁 Submit</button></div>`;
+  window.addCR=()=>{document.getElementById('cmc').innerHTML+=`<div><select class="cmp">${opts}</select><select class="cml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;};
+}
+
+window.createCAct=()=>{
+  let db=g();
+  let pids=[];document.querySelectorAll('.cp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
+  if(pids.length<2)return alert('Need 2+');
+  db.ac={pids};s(db);cup(g());
+};
+
+window.subCup=()=>{
+  let pos=[];
+  document.querySelectorAll('#cmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.cmp').value),place:parseInt(r.querySelector('.cml').value)});});
+  if(pos.length<2)return alert('Need 2+');
+  
+  // FIXED: Update global stats
+  updateStats(pos);
+  
+  let db=g();
+  let w=pos.find(p=>p.place===1);
+  if(w){let wp=db.p.find(p=>p.id===w.pid);if(wp)wp.cw++;}
+  db.c.push({type:'League Cup (10 Maps)',winner:w?.pid,date:new Date().toISOString()});
+  db.ac=null;
+  s(db);
+  alert('✅ Cup done! Check leaderboard.');
+  cup(g());
+};
+
+function chist(db){
+  let h='<div class="card"><h3>History</h3>';
+  db.c.slice().reverse().forEach(c=>{let w=db.p.find(p=>p.id===c.winner);h+=`<p>🥤 ${c.type} - ${w?.n}</p>`;});
+  return h+'</div>';
+}
+
+function hall(db){
+  let n=id=>db.p.find(p=>p.id===id)?.n||'—';
+  document.getElementById('main').innerHTML=`<div class="card"><h2>🏛️ Hall of Fame</h2>
+    <div class="stat-box"><h3>🏆 Tournament King</h3><p style="font-size:1.3rem"><b>${n(db.hof.tk)}</b></p></div>
+    <div class="stat-box"><h3>🌟 Legendary Player</h3><p style="font-size:1.3rem"><b>${n(db.hof.lp)}</b></p></div>
+    <div class="stat-box"><h3>⚡ Mythic Master</h3><p style="font-size:1.3rem"><b>${n(db.hof.mm)}</b></p></div></div>`;
+}
+
+function adm(db){
+  document.getElementById('main').innerHTML=`<div class="card"><h2>🔧 Admin</h2>
+    <button onclick="exp()">📤 Export JSON</button>
+    <input type="file" id="imf" accept=".json"><button onclick="imp()">📥 Import</button>
+    <button onclick="rst()" style="background:#c44;color:#fff">⚠️ Reset</button></div>`;
+  window.exp=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(g(),null,2)],{type:'application/json'}));a.download='stumble_backup.json';a.click();};
+  window.imp=()=>{let f=document.getElementById('imf').files[0];if(!f)return;let r=new FileReader();r.onload=e=>{localStorage.setItem(K,e.target.result);location.reload();};r.readAsText(f);};
+  window.rst=()=>{if(confirm('Delete all?')){localStorage.removeItem(K);location.reload();}};
+}
+
 render('dashboard');
-  </script>
+</script>
 </body>
 </html>
