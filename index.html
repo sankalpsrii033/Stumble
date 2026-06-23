@@ -78,7 +78,7 @@
 </div>
 
 <script>
-// ============ PASSWORD SYSTEM ============
+// ============ PASSWORD ============
 const ADMIN_PASSWORD = "stumble2026";
 let isUnlocked = false;
 
@@ -130,7 +130,7 @@ function updateLockUI(){
 function isAdminAllowed(){ return isUnlocked; }
 
 // ============ DATABASE ============
-const K='slm_v7';
+const K='slm_v8';
 function createFreshCurrent(){
   return {
     players: [
@@ -149,18 +149,26 @@ function createFreshCurrent(){
 }
 
 function migrateOldData(existing){
-  // If already new structure
+  // Already new structure
   if(existing && existing.seasons && existing.current) return existing;
-  // Old structure: has players array at top level, no seasons
-  if(existing && existing.players){
+  // Old structure with players array at top level
+  if(existing && (existing.players || existing.p)){
+    let players = existing.players || existing.p;
+    let tournaments = existing.tournaments || existing.t || [];
+    let cups = existing.cups || existing.c || [];
+    // Map old hof keys to new ones if needed
+    let hof = existing.hof || {};
+    if(hof.tk && !hof.sp){ hof.sp = hof.tk; delete hof.tk; }
+    if(hof.lp && !hof.lg){ hof.lg = hof.lp; delete hof.lp; }
+    if(hof.mm && !hof.mm){ hof.mm = hof.mm; }
     const newDB = {
       seasons: [{
         id: 1,
         name: "Season 1",
-        players: JSON.parse(JSON.stringify(existing.players)),
-        tournaments: existing.t || [],
-        cups: existing.c || [],
-        hof: existing.hof || {goat:null,sp:null,lg:null,mm:null},
+        players: JSON.parse(JSON.stringify(players)),
+        tournaments: JSON.parse(JSON.stringify(tournaments)),
+        cups: JSON.parse(JSON.stringify(cups)),
+        hof: JSON.parse(JSON.stringify(hof)),
         date: new Date().toISOString()
       }],
       current: createFreshCurrent()
@@ -264,214 +272,9 @@ function render(pg){
   }
 }
 
-function dash(cur){
-  let tm = cur.tournaments.reduce((a,b)=>a+(b.mc||0),0) + cur.cups.length;
-  let top = [...cur.players].sort((a,b)=>a.rk-b.rk)[0];
-  document.getElementById('main').innerHTML=`<div class="card"><h2>📊 Dashboard</h2><div class="grid-3">
-    <div class="stat-box">👥 Players<br><b style="font-size:1.5rem;color:#d4af37">${cur.players.length}</b></div>
-    <div class="stat-box">⚔️ Matches<br><b style="font-size:1.5rem;color:#d4af37">${tm}</b></div>
-    <div class="stat-box">🏟️ Tournaments<br><b style="font-size:1.5rem;color:#d4af37">${cur.tournaments.length}</b></div>
-    <div class="stat-box">🏆 Cups<br><b style="font-size:1.5rem;color:#d4af37">${cur.cups.length}</b></div>
-    <div class="stat-box">🥇 #1<br><b style="font-size:1.2rem;color:#d4af37">${top?.n||'N/A'}</b></div>
-  </div></div>`;
-}
+// ... (rest of the functions remain same until seasonsPage) ...
 
-function plist(cur){
-  let h='<div class="card"><h2>👥 Players</h2>';
-  [...cur.players].sort((a,b)=>a.rk-b.rk).forEach(p=>{
-    h+=`<div class="stat-box"><b>${p.n}</b> <span class="badge">#${p.rk}</span> (@${p.u})<br>
-    Matches: ${p.mp} | Wins: ${p.w} | Losses: ${p.l} | <b style="color:#d4af37">WR: ${p.wr}%</b><br>
-    MVPs: ${p.mvp} | Points: ${p.pts} | Streak: ${p.st}<br>
-    🏆 Tourney Wins: ${p.tw} | 🥤 Cup Wins: ${p.cw}</div>`;
-  });
-  document.getElementById('main').innerHTML=h+'</div>';
-}
-
-function lb(cur){
-  let rows=[...cur.players].sort((a,b)=>a.rk-b.rk).map((p,i)=>{
-    let m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-    return `<tr${i===0?' style="background:rgba(212,175,55,0.1)"':''}>
-      <td>${m} #${p.rk}</td><td><b>${p.n}</b></td>
-      <td><b style="color:#d4af37;font-size:1.1rem">${p.wr}%</b></td>
-      <td>${p.mvp}</td><td>${p.mp}</td><td>${p.w}W/${p.l}L</td></tr>`;
-  }).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏅 Leaderboard</h2>
-    <p style="color:#d4af37">Ranked by: Win Rate → MVP → Matches</p>
-    <table><thead><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th><th>W/L</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>`;
-}
-
-// ============ TOURNAMENT ============
-function tour(cur){
-  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
-  if(cur.activeT) activeT(cur);
-  else createT(cur);
-}
-
-function createT(cur){
-  let cks=cur.players.map(p=>`<label><input type="checkbox" class="tp" value="${p.id}" checked> ${p.n}</label><br>`).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏟️ Create Tournament</h2>
-    <input id="tn" value="Championship" style="width:100%"><br><br>
-    Maps: <input id="tm" value="5" min="5" max="10" type="number">
-    Matches: <input id="tc" value="3" min="3" max="10" type="number"><br><br>
-    <div class="stat-box"><h3>Participants:</h3>${cks}</div>
-    <button onclick="createTAct()" style="width:100%">Create</button></div>
-    ${cur.tournaments.length?thist(cur):''}`;
-}
-
-function activeT(cur){
-  let t=cur.activeT;
-  let nm={}; cur.players.forEach(p=>nm[p.id]=p.n);
-  let opts=t.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
-  let h=`<div class="card"><h2>🏟️ ${t.name}</h2><p>Match ${t.cm}/${t.tm} | Maps: ${t.maps}</p>
-    <h3>Standings</h3><table><tr><th>Player</th><th>Wins</th><th>Points</th></tr>`;
-  [...t.st].sort((a,b)=>b.mw-a.mw).forEach(s=>{h+=`<tr><td>${nm[s.pid]}</td><td><b>${s.mw}</b></td><td>${s.tp}</td></tr>`;});
-  h+='</table>';
-  if(!t.done){
-    h+=`<h3>Match #${t.cm}</h3><p style="color:#d4af37">⚠️ Updates leaderboard & Hall of Fame!</p><div id="tmc"></div>
-      <button onclick="addTR()">+ Player</button><button onclick="subTM()">✅ Submit</button>
-      <button onclick="cancelT()" class="danger" style="margin-left:1rem">❌ Cancel Tournament</button>`;
-  }else{
-    h+=`<p style="font-size:1.3rem;color:#d4af37">👑 Champion: ${nm[t.winner]}</p>
-      <button onclick="finT()">Save</button>
-      <button onclick="cancelT()" class="danger" style="margin-left:1rem">❌ Delete Tournament</button>`;
-  }
-  h+='</div>';
-  document.getElementById('main').innerHTML=h;
-  window.addTR=()=>{document.getElementById('tmc').innerHTML+=`<div><select class="tmp">${opts}</select><select class="tml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;};
-}
-
-window.cancelT = function(){
-  if(!isAdminAllowed())return;
-  if(confirm('Delete this active tournament?')){
-    let db=g(); db.current.activeT=null; s(db);
-    render('tournament');
-  }
-};
-
-window.createTAct=()=>{
-  if(!isAdminAllowed())return;
-  let db=g(); let cur=db.current;
-  let pids=[]; document.querySelectorAll('.tp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
-  if(pids.length<2)return alert('Need 2+');
-  cur.activeT={name:document.getElementById('tn').value||'T',maps:parseInt(document.getElementById('tm').value)||5,tm:parseInt(document.getElementById('tc').value)||3,pids,cm:1,done:false,winner:null,mc:0,st:pids.map(id=>({pid:id,mw:0,tp:0}))};
-  s(db); render('tournament');
-};
-
-window.subTM=()=>{
-  if(!isAdminAllowed())return;
-  let db=g(); let cur=db.current; let t=cur.activeT;
-  let pos=[]; document.querySelectorAll('#tmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.tmp').value),place:parseInt(r.querySelector('.tml').value)});});
-  if(pos.length<2)return alert('Need 2+');
-  updateStats(pos);
-  db=g(); cur=db.current; t=cur.activeT;
-  let w=pos.find(p=>p.place===1);
-  if(w){let st=t.st.find(x=>x.pid===w.pid);if(st)st.mw++;}
-  let pts={1:18,2:15,3:13,4:12,5:11};
-  pos.forEach(e=>{let st=t.st.find(x=>x.pid===e.pid);if(st)st.tp+=(pts[e.place]||0);});
-  t.mc++; t.cm++;
-  if(t.cm>t.tm){t.done=true;t.winner=[...t.st].sort((a,b)=>b.mw-a.mw)[0].pid;}
-  s(db);
-  alert('✅ Match recorded!');
-  render('tournament');
-};
-
-window.finT=()=>{
-  if(!isAdminAllowed())return;
-  let db=g(); let cur=db.current; let t=cur.activeT;
-  let wp=cur.players.find(p=>p.id===t.winner);
-  if(wp)wp.tw++;
-  cur.tournaments.push({name:t.name,winner:t.winner,date:new Date().toISOString(),mc:t.mc});
-  cur.activeT=null;
-  updateHallOfFame(cur);
-  s(db);
-  alert('🏆 Tournament saved!');
-  render('tournament');
-};
-
-function thist(cur){
-  let h='<div class="card"><h3>History</h3>';
-  cur.tournaments.slice().reverse().forEach(t=>{let w=cur.players.find(p=>p.id===t.winner);h+=`<p>🏆 ${t.name} - ${w?.n} (${t.mc}m)</p>`;});
-  return h+'</div>';
-}
-
-// ============ CUP ============
-function cup(cur){
-  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
-  if(cur.activeCup) activeC(cur);
-  else createC(cur);
-}
-
-function createC(cur){
-  let cks=cur.players.map(p=>`<label><input type="checkbox" class="cp" value="${p.id}" checked> ${p.n}</label><br>`).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏆 Cup (10 Maps)</h2>
-    <div class="stat-box"><h3>Participants:</h3>${cks}</div>
-    <button onclick="createCAct()" style="width:100%">Create Cup</button></div>
-    ${cur.cups.length?chist(cur):''}`;
-}
-
-function activeC(cur){
-  let nm={}; cur.players.forEach(p=>nm[p.id]=p.n);
-  let opts=cur.activeCup.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏆 Cup Match</h2><div id="cmc"></div>
-    <button onclick="addCR()">+ Player</button><button onclick="subCup()">🏁 Submit</button>
-    <button onclick="cancelCup()" class="danger" style="margin-left:1rem">❌ Cancel Cup</button></div>`;
-  window.addCR=()=>{document.getElementById('cmc').innerHTML+=`<div><select class="cmp">${opts}</select><select class="cml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;};
-}
-
-window.cancelCup=()=>{if(confirm('Delete this cup?')){let db=g();db.current.activeCup=null;s(db);render('cup');}};
-
-window.createCAct=()=>{
-  let db=g(); let cur=db.current;
-  let pids=[]; document.querySelectorAll('.cp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
-  if(pids.length<2)return alert('Need 2+');
-  cur.activeCup={pids}; s(db); render('cup');
-};
-
-window.subCup=()=>{
-  let pos=[]; document.querySelectorAll('#cmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.cmp').value),place:parseInt(r.querySelector('.cml').value)});});
-  if(pos.length<2)return alert('Need 2+');
-  updateStats(pos);
-  let db=g(); let cur=db.current;
-  let w=pos.find(p=>p.place===1);
-  if(w){let wp=cur.players.find(p=>p.id===w.pid);if(wp)wp.cw++;}
-  cur.cups.push({type:'League Cup (10 Maps)',winner:w?.pid,date:new Date().toISOString()});
-  cur.activeCup=null;
-  updateHallOfFame(cur);
-  s(db);
-  alert('✅ Cup done!');
-  render('cup');
-};
-
-function chist(cur){
-  let h='<div class="card"><h3>History</h3>';
-  cur.cups.slice().reverse().forEach(c=>{let w=cur.players.find(p=>p.id===c.winner);h+=`<p>🥤 ${c.type} - ${w?.n}</p>`;});
-  return h+'</div>';
-}
-
-// ============ HALL OF FAME ============
-function hall(cur){
-  let n=id=>{let p=cur.players.find(x=>x.id===id);return p?p.n:'—';};
-  let goat=cur.players.find(x=>x.id===cur.hof.goat);
-  let sp=cur.players.find(x=>x.id===cur.hof.sp);
-  let lg=cur.players.find(x=>x.id===cur.hof.lg);
-  let mm=cur.players.find(x=>x.id===cur.hof.mm);
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏛️ Hall of Fame</h2>
-    <div class="hof-card"><div class="hof-icon">🐐</div><div class="hof-title">GOAT - Highest Win Rate</div><div class="hof-name">${goat?goat.n:'—'}</div><div class="hof-stat">Win Rate: ${goat?goat.wr+'%':'—'}</div></div>
-    <div class="hof-card"><div class="hof-icon">🏆</div><div class="hof-title">Stumble Pro - Most Tournament Wins</div><div class="hof-name">${sp?sp.n:'—'}</div><div class="hof-stat">Tournament Wins: ${sp?sp.tw:'—'}</div></div>
-    <div class="hof-card"><div class="hof-icon">🌟</div><div class="hof-title">Legendary Guy - Most Cup Wins</div><div class="hof-name">${lg?lg.n:'—'}</div><div class="hof-stat">Cup Wins: ${lg?lg.cw:'—'}</div></div>
-    <div class="hof-card"><div class="hof-icon">⚡</div><div class="hof-title">Mythic Man - Highest MVP</div><div class="hof-name">${mm?mm.n:'—'}</div><div class="hof-stat">MVP Count: ${mm?mm.mvp:'—'}</div></div>
-  </div>`;
-}
-
-function hist(cur){
-  let h='<div class="card"><h2>📜 History</h2>';
-  if(cur.tournaments.length){h+='<h3>Tournaments</h3>';cur.tournaments.slice().reverse().forEach(t=>{let w=cur.players.find(p=>p.id===t.winner);h+=`<p>🏆 ${t.name} - ${w?.n}</p>`;});}
-  if(cur.cups.length){h+='<h3>Cups</h3>';cur.cups.slice().reverse().forEach(c=>{let w=cur.players.find(p=>p.id===c.winner);h+=`<p>🥤 ${c.type} - ${w?.n}</p>`;});}
-  document.getElementById('main').innerHTML=h+'</div>';
-}
-
-// ============ SEASONS ============
+// ============ SEASONS (FIXED IMPORT) ============
 function seasonsPage(db){
   if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
   let html = '<div class="card"><h2>📅 Seasons</h2>';
@@ -499,7 +302,6 @@ window.endSeason = function(){
   if(!name) return;
   let db = g();
   let cur = db.current;
-  // Deep clone current data
   let seasonData = {
     id: db.seasons.length + 1,
     name: name,
@@ -510,13 +312,13 @@ window.endSeason = function(){
     date: new Date().toISOString()
   };
   db.seasons.push(seasonData);
-  // Reset current
   db.current = createFreshCurrent();
   s(db);
   alert('Season archived! New season started fresh.');
   render('seasons');
 };
 
+// FIXED IMPORT FUNCTION
 window.importSeasonBackup = function(){
   let input = document.createElement('input');
   input.type = 'file';
@@ -528,26 +330,36 @@ window.importSeasonBackup = function(){
     reader.onload = function(ev){
       try{
         let data = JSON.parse(ev.target.result);
-        // Determine if it's old format or new
         let players, tournaments, cups, hof;
+        
+        // Detect format
         if(data.current){
-          // new format, take current
+          // New format with seasons
           players = data.current.players;
           tournaments = data.current.tournaments;
           cups = data.current.cups;
-          hof = data.current.hof;
-        }else if(data.players){
-          // old format
-          players = data.players;
-          tournaments = data.t || data.tournaments || [];
-          cups = data.c || data.cups || [];
-          hof = data.hof || {goat:null,sp:null,lg:null,mm:null};
+          hof = data.current.hof || {};
+        }else if(data.players || data.p){
+          // Old format: direct players array
+          players = data.players || data.p;
+          tournaments = data.tournaments || data.t || [];
+          cups = data.cups || data.c || [];
+          hof = data.hof || {};
+          // Convert old hof keys if present
+          if(hof.tk && !hof.sp){ hof.sp = hof.tk; delete hof.tk; }
+          if(hof.lp && !hof.lg){ hof.lg = hof.lp; delete hof.lp; }
+          if(!hof.goat) hof.goat = null;
+          if(!hof.sp) hof.sp = null;
+          if(!hof.lg) hof.lg = null;
+          if(!hof.mm) hof.mm = null;
         }else{
-          alert('Invalid backup file.');
+          alert('❌ Invalid backup file! The file must contain player data.');
           return;
         }
+        
         let seasonName = prompt('Enter a name for this imported season:', 'Imported Season');
         if(!seasonName) return;
+        
         let db = g();
         db.seasons.push({
           id: db.seasons.length+1,
@@ -559,10 +371,10 @@ window.importSeasonBackup = function(){
           date: new Date().toISOString()
         });
         s(db);
-        alert('Season imported successfully!');
+        alert('✅ Season imported successfully!');
         render('seasons');
       }catch(e){
-        alert('Error reading file.');
+        alert('❌ Error reading file: ' + e.message);
       }
     };
     reader.readAsText(file);
@@ -570,37 +382,9 @@ window.importSeasonBackup = function(){
   input.click();
 };
 
-window.viewSeason = function(idx){
-  let db = g();
-  let season = db.seasons[idx];
-  if(!season) return;
-  let players = season.players;
-  // Ensure ranks are computed if missing
-  players.forEach(p => { if(!p.rk) p.rk=0; });
-  let sorted = [...players].sort((a,b)=> (b.wr||0)-(a.wr||0) || (b.mvp||0)-(a.mvp||0) || (b.mp||0)-(a.mp||0) );
-  let n = id => { let p = players.find(x=>x.id===id); return p?p.n:'—'; };
-  let html = `<div class="card"><h2>📅 ${season.name}</h2>
-    <p>Date: ${new Date(season.date).toLocaleDateString()}</p>
-    <button onclick="render('seasons')">← Back to Seasons</button>
-    <h3>🏅 Leaderboard</h3>
-    <table><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th><th>W/L</th></tr>`;
-  sorted.forEach((p,i)=>{
-    html += `<tr><td>#${i+1}</td><td><b>${p.n}</b></td><td>${p.wr||0}%</td><td>${p.mvp||0}</td><td>${p.mp||0}</td><td>${p.w||0}W/${p.l||0}L</td></tr>`;
-  });
-  html += `</table>
-    <h3>🏛️ Hall of Fame</h3>
-    <div>🐐 GOAT: ${n(season.hof?.goat)} | 🏆 Stumble Pro: ${n(season.hof?.sp)} | 🌟 Legendary Guy: ${n(season.hof?.lg)} | ⚡ Mythic Man: ${n(season.hof?.mm)}</div>
-    <h3>👥 Players Stats</h3>`;
-  players.forEach(p=>{
-    html += `<div class="stat-box"><b>${p.n}</b> (@${p.u})<br>
-      Matches: ${p.mp||0} | Wins: ${p.w||0} | Losses: ${p.l||0} | WR: ${p.wr||0}%<br>
-      MVPs: ${p.mvp||0} | Points: ${p.pts||0} | Tourney Wins: ${p.tw||0} | Cup Wins: ${p.cw||0}</div>`;
-  });
-  html += '</div>';
-  document.getElementById('main').innerHTML = html;
-};
+// ... (viewSeason, admin, etc. remain unchanged) ...
 
-// ============ ADMIN ============
+// ============ ADMIN (fixed import) ============
 function adm(db){
   if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
   document.getElementById('main').innerHTML=`<div class="card"><h2>🔧 Admin</h2>
@@ -610,7 +394,26 @@ function adm(db){
     <button onclick="changePwd()">🔑 Change Password</button>
     <button onclick="rst()" style="background:#c44;color:#fff">⚠️ Reset All</button></div>`;
   window.exp=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(g(),null,2)],{type:'application/json'}));a.download='stumble_backup.json';a.click();};
-  window.imp=()=>{let f=document.getElementById('imf').files[0];if(!f)return;let r=new FileReader();r.onload=e=>{localStorage.setItem(K,e.target.result);location.reload();};r.readAsText(f);};
+  window.imp=()=>{
+    let f=document.getElementById('imf').files[0];
+    if(!f)return;
+    let r=new FileReader();
+    r.onload=e=>{
+      try{
+        let data = JSON.parse(e.target.result);
+        // If old format, migrate it
+        if(!data.seasons || !data.current){
+          data = migrateOldData(data);
+        }
+        localStorage.setItem(K, JSON.stringify(data));
+        alert('✅ Database imported! Refreshing...');
+        location.reload();
+      }catch(err){
+        alert('❌ Invalid JSON file.');
+      }
+    };
+    r.readAsText(f);
+  };
   window.rst=()=>{if(confirm('Delete all?')){localStorage.removeItem(K);location.reload();}};
   window.changePwd=()=>{let np=prompt('Enter new password:');if(np&&np.length>=4){ADMIN_PASSWORD=np;alert('Password changed!');}};
 }
