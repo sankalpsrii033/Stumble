@@ -1,641 +1,228 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang=<span class="syn-string">"en"span>>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stumble League Manager Pro</title>
+  <meta charset=<span class="syn-string">"UTF-<span class="syn-number">8span>"span>>
+  <meta name=<span class="syn-string">"viewport"span> content=<span class="syn-string">"width=device-width, initial-scale=<span class="syn-number">1.0span>"span>>
+  <title>Luxe Salon</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{background:#0a0e14;font-family:'Segoe UI',sans-serif;color:#e0e0e0;display:flex;min-height:100vh}
-    .sidebar{width:260px;background:#11161e;border-right:2px solid #d4af37;padding:1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
-    .logo{font-size:1.6rem;font-weight:800;color:#d4af37;text-align:center;margin-bottom:2rem}
-    .nav-item{padding:.8rem;margin:.3rem 0;border-radius:8px;cursor:pointer;color:#888;font-weight:600}
-    .nav-item:hover,.nav-item.active{background:rgba(212,175,55,0.15);color:#d4af37}
-    .nav-item.locked{color:#666}
-    .nav-item.locked::after{content:" 🔒";font-size:.7rem}
-    .main-panel{flex:1;padding:2rem;overflow-y:auto}
-    .card{background:#11161e;border:1px solid #2a3040;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
-    h2{color:#d4af37;margin-bottom:1rem}
-    h3{color:#e0b040;margin:1rem 0}
-    button{background:#d4af37;color:#000;border:none;padding:.6rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;margin:.3rem}
-    button:hover{background:#e8c550}
-    button.danger{background:#c44;color:#fff}
-    button.danger:hover{background:#f55}
-    button.unlock-btn{background:#2a3040;color:#d4af37;border:1px solid #d4af37}
-    button.unlock-btn:hover{background:#d4af37;color:#000}
-    select,input{background:#0a0e14;border:1px solid #2a3040;color:#fff;padding:.5rem;border-radius:6px;margin:.2rem}
-    table{width:100%;border-collapse:collapse;margin:1rem 0}
-    th{text-align:left;color:#d4af37;padding:.7rem;border-bottom:2px solid #d4af37}
-    td{padding:.7rem;border-bottom:1px solid #1a2030}
-    .stat-box{background:#0a0e14;border:1px solid #2a3040;border-radius:8px;padding:1rem;margin:.5rem 0}
-    .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem}
-    .badge{background:#d4af37;color:#000;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.85rem}
-    .locked-badge{background:#c44;color:#fff;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.75rem}
-    .unlocked-badge{background:#4c4;color:#fff;padding:.2rem .7rem;border-radius:12px;font-weight:700;font-size:.75rem}
-    .hof-card{background:linear-gradient(135deg,#1a1f2e,#0d1117);border:2px solid #d4af37;border-radius:16px;padding:1.5rem;margin:1rem 0;text-align:center}
-    .hof-title{font-size:1.1rem;color:#888;margin-bottom:.5rem}
-    .hof-name{font-size:1.8rem;font-weight:800;color:#d4af37;margin:.5rem 0}
-    .hof-icon{font-size:3rem;margin:.5rem 0}
-    .hof-stat{font-size:1rem;color:#e0b040}
-    #passwordModal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:1000}
-    .modal-box{background:#11161e;border:2px solid #d4af37;border-radius:16px;padding:2rem;text-align:center;min-width:350px}
-    .modal-box input{width:100%;margin:1rem 0;font-size:1.1rem;text-align:center}
-    .error-msg{color:#f66;margin:.5rem 0;font-size:.9rem}
-    .season-card{cursor:pointer;transition:0.2s}
-    .season-card:hover{background:#1a2030}
+    /* Reset & basic styles */
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: <span class="syn-number">0span>;
+      padding: <span class="syn-number">0span>;
+      line-height: <span class="syn-number">1.6span>;
+      color: #<span class="syn-number">333span>;
+    }
+
+    /* Header */
+    header {
+      background: #2c3e50;
+      color: #fff;
+      padding: 20px;
+    }
+    header h1 {
+      margin: <span class="syn-number">0span>;
+      text-align: center;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      padding: <span class="syn-number">0span>;
+      margin: 10px <span class="syn-number">0span> <span class="syn-number">0span>;
+    }
+    nav li {
+      margin: <span class="syn-number">0span> 15px;
+    }
+    nav a {
+      color: #ecf0f1;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* Hero */
+    .hero {
+      background: url(<span class="syn-string">'https://picsum.photos/<span class="syn-number">1200span>/<span class="syn-number">400span>'span>) center/cover no-repeat;
+      color: #fff;
+      text-align: center;
+      padding: 100px 20px;
+    }
+    .hero h1 {
+      font-size: 3em;
+      margin-bottom: <span class="syn-number">0.span>5em;
+    }
+    .hero p {
+      font-size: <span class="syn-number">1.span>2em;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #d4a017;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background: #b38c12;
+    }
+
+    /* Services */
+    .services {
+      background: #f9f9f9;
+      padding: 40px 20px;
+    }
+    .services h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .services ul {
+      list-style: disc;
+      margin: <span class="syn-number">0span> auto;
+      max-width: 400px;
+      padding-left: 20px;
+    }
+
+    /* Gallery */
+    .gallery {
+      padding: 40px 20px;
+    }
+    .gallery h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .gallery .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+    .gallery img {
+      width: <span class="syn-number">100span>%;
+      height: auto;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    /* About */
+    #about {
+      background: #eef2f5;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    /* Contact */
+    #contact {
+      padding: 40px 20px;
+      background: #fff;
+    }
+    #contact h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #contact form {
+      max-width: 400px;
+      margin: <span class="syn-number">0span> auto;
+    }
+    #contact label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    #contact input,
+    #contact textarea {
+      width: <span class="syn-number">100span>%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #contact button {
+      margin-top: 20px;
+      width: <span class="syn-number">100span>%;
+    }
+
+    /* Footer */
+    footer {
+      background: #2c3e50;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      font-size: <span class="syn-number">0.span>9em;
+    }
   </style>
 </head>
 <body>
-<aside class="sidebar">
-  <div class="logo">🏆 STUMBLE PRO</div>
-  <div style="text-align:center;margin-bottom:1rem">
-    <span id="lockStatus" class="locked-badge">🔒 LOCKED</span>
-  </div>
-  <nav id="nav">
-    <div class="nav-item active" data-p="dashboard">📊 Dashboard</div>
-    <div class="nav-item" data-p="players">👥 Players</div>
-    <div class="nav-item" data-p="leaderboard">🏅 Leaderboard</div>
-    <div class="nav-item locked" data-p="tournament">🏟️ Tournament 🔒</div>
-    <div class="nav-item locked" data-p="cup">🏆 Cup 🔒</div>
-    <div class="nav-item" data-p="hof">🏛️ Hall of Fame</div>
-    <div class="nav-item" data-p="history">📜 History</div>
-    <div class="nav-item locked" data-p="seasons">📅 Seasons 🔒</div>
-    <div class="nav-item locked" data-p="admin">🔧 Admin 🔒</div>
-    <button class="unlock-btn" onclick="toggleLock()" style="width:100%;margin-top:1rem">🔑 Unlock Admin</button>
+
+<header>
+  <h1>Luxe Salon</h1>
+  <nav>
+    <ul>
+      <li><a href=<span class="syn-string">"#home"span>>Home</a></li>
+      <li><a href=<span class="syn-string">"#services"span>>Services</a></li>
+      <li><a href=<span class="syn-string">"#gallery"span>>Gallery</a></li>
+      <li><a href=<span class="syn-string">"#about"span>>About</a></li>
+      <li><a href=<span class="syn-string">"#contact"span>>Contact</a></li>
+    </ul>
   </nav>
-</aside>
-<main class="main-panel" id="main"></main>
+</header>
 
-<div id="passwordModal" style="display:none">
-  <div class="modal-box">
-    <h2 style="color:#d4af37">🔐 Admin Access</h2>
-    <p style="color:#888">Enter password to unlock admin features</p>
-    <input type="password" id="pwdInput" placeholder="Enter password" onkeypress="if(event.key==='Enter')checkPassword()">
-    <p class="error-msg" id="pwdError"></p>
-    <button onclick="checkPassword()" style="width:100%">🔓 Unlock</button>
-    <button onclick="closeModal()" style="background:#444;color:#fff;width:100%;margin-top:.5rem">Cancel</button>
+<section id=<span class="syn-string">"home"span> class=<span class="syn-string">"hero"span>>
+  <h1>Welcome to Luxe Salon</h1>
+  <p>Your beauty, our passion.</p>
+  <a href=<span class="syn-string">"#booking"span> class=<span class="syn-string">"btn"span>>Book an Appointment</a>
+</section>
+
+<section id=<span class="syn-string">"services"span> class=<span class="syn-string">"services"span>>
+  <h2>Our Services</h2>
+  <ul>
+    <li>Haircuts & Styling</li>
+    <li>Color & Highlights</li>
+    <li>Manicure & Pedicure</li>
+    <li>Facials & Massage</li>
+    <li>Bridal Makeup</li>
+  </ul>
+</section>
+
+<section id=<span class="syn-string">"gallery"span> class=<span class="syn-string">"gallery"span>>
+  <h2>Gallery</h2>
+  <div class=<span class="syn-string">"grid"span>>
+    <img src=<span class="syn-string">"https://picsum.photos/seed/salon1/<span class="syn-number">300span>/<span class="syn-number">300span>"span> alt=<span class="syn-string">"Salon interior"span>>
+    <img src=<span class="syn-string">"https://picsum.photos/seed/salon2/<span class="syn-number">300span>/<span class="syn-number">300span>"span> alt=<span class="syn-string">"Hair styling"span>>
+    <img src=<span class="syn-string">"https://picsum.photos/seed/salon3/<span class="syn-number">300span>/<span class="syn-number">300span>"span> alt=<span class="syn-string">"Nail art"span>>
+    <img src=<span class="syn-string">"https://picsum.photos/seed/salon4/<span class="syn-number">300span>/<span class="syn-number">300span>"span> alt=<span class="syn-string">"Facial treatment"span>>
   </div>
-</div>
+</section>
 
-<script>
-// ============ PASSWORD ============
-const ADMIN_PASSWORD = "stumble2026";
-let isUnlocked = false;
+<section id=<span class="syn-string">"about"span>>
+  <h2>About Us</h2>
+  <p>
+    We are a team of certified beauty professionals dedicated to enhancing your natural beauty with the latest techniques and products. Our mission is to make you feel confident and pampered.
+  </p>
+</section>
 
-function toggleLock(){
-  if(isUnlocked){
-    isUnlocked = false;
-    updateLockUI();
-    render('dashboard');
-  }else{
-    document.getElementById('passwordModal').style.display = 'flex';
-    document.getElementById('pwdInput').value = '';
-    document.getElementById('pwdError').textContent = '';
-    document.getElementById('pwdInput').focus();
-  }
-}
+<section id=<span class="syn-string">"contact"span>>
+  <h2>Contact Us</h2>
+  <form>
+    <label for=<span class="syn-string">"name"span>>Name</label>
+    <input type=<span class="syn-string">"text"span> id=<span class="syn-string">"name"span> name=<span class="syn-string">"name"span> required>
 
-function checkPassword(){
-  if(document.getElementById('pwdInput').value === ADMIN_PASSWORD){
-    isUnlocked = true;
-    document.getElementById('passwordModal').style.display = 'none';
-    updateLockUI();
-    alert('✅ Admin features unlocked!');
-    render('dashboard');
-  }else{
-    document.getElementById('pwdError').textContent = '❌ Wrong password!';
-    document.getElementById('pwdInput').value = '';
-  }
-}
+    <label for=<span class="syn-string">"email"span>>Email</label>
+    <input type=<span class="syn-string">"email"span> id=<span class="syn-string">"email"span> name=<span class="syn-string">"email"span> required>
 
-function closeModal(){ document.getElementById('passwordModal').style.display = 'none'; }
+    <label for=<span class="syn-string">"message"span>>Message</label>
+    <textarea id=<span class="syn-string">"message"span> name=<span class="syn-string">"message"span> rows=<span class="syn-string">"<span class="syn-number">4span>"span> required></textarea>
 
-function updateLockUI(){
-  const status = document.getElementById('lockStatus');
-  document.querySelectorAll('.nav-item.locked').forEach(item => {
-    if(isUnlocked){
-      item.classList.remove('locked');
-      item.innerHTML = item.innerHTML.replace(' 🔒','');
-    }else{
-      if(!item.classList.contains('locked')){
-        item.classList.add('locked');
-        if(!item.innerHTML.includes('🔒')) item.innerHTML += ' 🔒';
-      }
-    }
-  });
-  status.className = isUnlocked ? 'unlocked-badge' : 'locked-badge';
-  status.textContent = isUnlocked ? '🔓 UNLOCKED' : '🔒 LOCKED';
-}
+    <button type=<span class="syn-string">"submit"span> class=<span class="syn-string">"btn"span>>Send Message</button>
+  </form>
+</section>
 
-function isAdminAllowed(){ return isUnlocked; }
+<footer>
+  <p>&copy; <span class="syn-number">2024span> Luxe Salon. All rights reserved.</p>
+</footer>
 
-// ============ DATABASE ============
-const K='slm_v8';
-function createFreshCurrent(){
-  return {
-    players: [
-      {id:1,n:"Sankalp",u:"sankalp_op",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
-      {id:2,n:"Akshat Rakesh",u:"terrorbebu",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
-      {id:3,n:"Atharva Mishra",u:"panditdabang",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
-      {id:4,n:"Nayan Mehrotra",u:"nbot",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]},
-      {id:5,n:"Yugank Dwivedi",u:"yuggu",mp:0,w:0,l:0,wr:0,pts:0,mvp:0,tw:0,cw:0,rk:0,hr:0,st:0,bs:0,ach:[]}
-    ],
-    tournaments: [],
-    cups: [],
-    hof: {goat:null,sp:null,lg:null,mm:null},
-    activeT: null,
-    activeCup: null
-  };
-}
-
-function migrateOldData(existing){
-  if(existing && existing.seasons && existing.current) return existing;
-  if(existing && (existing.players || existing.p)){
-    let players = existing.players || existing.p;
-    let tournaments = existing.tournaments || existing.t || [];
-    let cups = existing.cups || existing.c || [];
-    let hof = existing.hof || {};
-    if(hof.tk && !hof.sp){ hof.sp = hof.tk; delete hof.tk; }
-    if(hof.lp && !hof.lg){ hof.lg = hof.lp; delete hof.lp; }
-    if(!hof.goat) hof.goat = null;
-    if(!hof.sp) hof.sp = null;
-    if(!hof.lg) hof.lg = null;
-    if(!hof.mm) hof.mm = null;
-    return {
-      seasons: [{
-        id: 1,
-        name: "Season 1",
-        players: JSON.parse(JSON.stringify(players)),
-        tournaments: JSON.parse(JSON.stringify(tournaments)),
-        cups: JSON.parse(JSON.stringify(cups)),
-        hof: JSON.parse(JSON.stringify(hof)),
-        date: new Date().toISOString()
-      }],
-      current: createFreshCurrent()
-    };
-  }
-  return { seasons: [], current: createFreshCurrent() };
-}
-
-if(!localStorage.getItem(K)){
-  localStorage.setItem(K, JSON.stringify({ seasons: [], current: createFreshCurrent() }));
-}else{
-  let db = JSON.parse(localStorage.getItem(K));
-  if(!db.seasons || !db.current){
-    db = migrateOldData(db);
-    localStorage.setItem(K, JSON.stringify(db));
-  }
-}
-
-function g(){ return JSON.parse(localStorage.getItem(K)); }
-function s(d){ localStorage.setItem(K, JSON.stringify(d)); }
-
-function getCurrent(){ return g().current; }
-
-// ============ HALL OF FAME ============
-function updateHallOfFame(cur){
-  let p = cur.players;
-  if(p.length===0) return;
-  cur.hof.goat = [...p].sort((a,b)=>b.wr-a.wr||b.mp-a.mp)[0].id;
-  cur.hof.sp = [...p].sort((a,b)=>b.tw-a.tw||b.mp-a.mp)[0].id;
-  cur.hof.lg = [...p].sort((a,b)=>b.cw-a.cw||b.mp-a.mp)[0].id;
-  cur.hof.mm = [...p].sort((a,b)=>b.mvp-a.mvp||b.mp-a.mp)[0].id;
-}
-
-function updateStats(pos){
-  let db = g();
-  let cur = db.current;
-  let pts={1:18,2:15,3:13,4:12,5:11};
-  let ids=[...new Set(pos.map(x=>x.pid))];
-  ids.forEach(id=>{let p=cur.players.find(x=>x.id===id);if(p)p.mp+=1;});
-  let w=pos.find(x=>x.place===1);
-  if(w){let wp=cur.players.find(x=>x.id===w.pid);if(wp){wp.w+=1;wp.mvp+=1;wp.st+=1;if(wp.st>wp.bs)wp.bs=wp.st;}}
-  pos.forEach(e=>{
-    let p=cur.players.find(x=>x.id===e.pid);if(!p)return;
-    p.pts+=(pts[e.place]||0);
-    if(e.place!==1){p.l+=1;p.st=0;}
-  });
-  cur.players.forEach(p=>{p.wr=p.mp>0?parseFloat(((p.w/p.mp)*100).toFixed(1)):0;});
-  let srt=[...cur.players].sort((a,b)=>b.wr-a.wr||b.mvp-a.mvp||b.mp-a.mp);
-  srt.forEach((p,i)=>{p.rk=i+1;if(!p.hr||p.rk<p.hr)p.hr=p.rk;});
-  cur.players.forEach(p=>{
-    if(p.tw>=1&&!p.ach.includes('t1'))p.ach.push('t1');
-    if(p.tw>=5&&!p.ach.includes('t5'))p.ach.push('t5');
-    if(p.tw>=10&&!p.ach.includes('t10'))p.ach.push('t10');
-    if(p.cw>=1&&!p.ach.includes('c1'))p.ach.push('c1');
-    if(p.cw>=10&&!p.ach.includes('c10'))p.ach.push('c10');
-    if(p.mvp>=1&&!p.ach.includes('m1'))p.ach.push('m1');
-    if(p.mvp>=25&&!p.ach.includes('m25'))p.ach.push('m25');
-    if(p.mvp>=50&&!p.ach.includes('m50'))p.ach.push('m50');
-  });
-  updateHallOfFame(cur);
-  s(db);
-}
-
-// ============ NAVIGATION ============
-document.querySelectorAll('.nav-item').forEach(el=>{
-  el.addEventListener('click',function(){
-    const page = this.dataset.p;
-    const lockedPages = ['tournament','cup','seasons','admin'];
-    if(lockedPages.includes(page) && !isAdminAllowed()){
-      alert('🔒 This feature is locked! Click "Unlock Admin" and enter password.');
-      return;
-    }
-    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-    this.classList.add('active');
-    render(page);
-  });
-});
-
-function render(pg){
-  let db = g();
-  let cur = db.current;
-  switch(pg){
-    case 'dashboard': dash(cur); break;
-    case 'players': plist(cur); break;
-    case 'leaderboard': lb(cur); break;
-    case 'tournament': tour(cur); break;
-    case 'cup': cup(cur); break;
-    case 'hof': hall(cur); break;
-    case 'history': hist(cur); break;
-    case 'seasons': seasonsPage(db); break;
-    case 'admin': adm(db); break;
-  }
-}
-
-// ---------- PAGES ----------
-function dash(cur){
-  let tm = cur.tournaments.reduce((a,b)=>a+(b.mc||0),0) + cur.cups.length;
-  let top = [...cur.players].sort((a,b)=>a.rk-b.rk)[0];
-  document.getElementById('main').innerHTML=`<div class="card"><h2>📊 Dashboard</h2><div class="grid-3">
-    <div class="stat-box">👥 Players<br><b style="font-size:1.5rem;color:#d4af37">${cur.players.length}</b></div>
-    <div class="stat-box">⚔️ Matches<br><b style="font-size:1.5rem;color:#d4af37">${tm}</b></div>
-    <div class="stat-box">🏟️ Tournaments<br><b style="font-size:1.5rem;color:#d4af37">${cur.tournaments.length}</b></div>
-    <div class="stat-box">🏆 Cups<br><b style="font-size:1.5rem;color:#d4af37">${cur.cups.length}</b></div>
-    <div class="stat-box">🥇 #1<br><b style="font-size:1.2rem;color:#d4af37">${top?.n||'N/A'}</b></div>
-  </div></div>`;
-}
-
-function plist(cur){
-  let h='<div class="card"><h2>👥 Players</h2>';
-  [...cur.players].sort((a,b)=>a.rk-b.rk).forEach(p=>{
-    h+=`<div class="stat-box"><b>${p.n}</b> <span class="badge">#${p.rk}</span> (@${p.u})<br>
-    Matches: ${p.mp} | Wins: ${p.w} | Losses: ${p.l} | <b style="color:#d4af37">WR: ${p.wr}%</b><br>
-    MVPs: ${p.mvp} | Points: ${p.pts} | Streak: ${p.st}<br>
-    🏆 Tourney Wins: ${p.tw} | 🥤 Cup Wins: ${p.cw}</div>`;
-  });
-  document.getElementById('main').innerHTML=h+'</div>';
-}
-
-function lb(cur){
-  let rows=[...cur.players].sort((a,b)=>a.rk-b.rk).map((p,i)=>{
-    let m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-    return `<tr${i===0?' style="background:rgba(212,175,55,0.1)"':''}>
-      <td>${m} #${p.rk}</td><td><b>${p.n}</b></td>
-      <td><b style="color:#d4af37;font-size:1.1rem">${p.wr}%</b></td>
-      <td>${p.mvp}</td><td>${p.mp}</td><td>${p.w}W/${p.l}L</td></tr>`;
-  }).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏅 Leaderboard</h2>
-    <p style="color:#d4af37">Ranked by: Win Rate → MVP → Matches</p>
-    <table><thead><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th><th>W/L</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>`;
-}
-
-// ---------- TOURNAMENT ----------
-function tour(cur){
-  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
-  if(cur.activeT) activeT(cur);
-  else createT(cur);
-}
-
-function createT(cur){
-  let cks=cur.players.map(p=>`<label><input type="checkbox" class="tp" value="${p.id}" checked> ${p.n}</label><br>`).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏟️ Create Tournament</h2>
-    <input id="tn" value="Championship" style="width:100%"><br><br>
-    Maps: <input id="tm" value="5" min="5" max="10" type="number">
-    Matches: <input id="tc" value="3" min="3" max="10" type="number"><br><br>
-    <div class="stat-box"><h3>Participants:</h3>${cks}</div>
-    <button onclick="createTAct()" style="width:100%">Create</button></div>
-    ${cur.tournaments.length?thist(cur):''}`;
-}
-
-function activeT(cur){
-  let t=cur.activeT;
-  let nm={}; cur.players.forEach(p=>nm[p.id]=p.n);
-  let opts=t.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
-  let h=`<div class="card"><h2>🏟️ ${t.name}</h2><p>Match ${t.cm}/${t.tm} | Maps: ${t.maps}</p>
-    <h3>Standings</h3><table><tr><th>Player</th><th>Wins</th><th>Points</th></tr>`;
-  [...t.st].sort((a,b)=>b.mw-a.mw).forEach(s=>{h+=`<tr><td>${nm[s.pid]}</td><td><b>${s.mw}</b></td><td>${s.tp}</td></tr>`;});
-  h+='</table>';
-  if(!t.done){
-    h+=`<h3>Match #${t.cm}</h3><p style="color:#d4af37">⚠️ Updates leaderboard & Hall of Fame!</p><div id="tmc"></div>
-      <button onclick="addTR()">+ Player</button><button onclick="subTM()">✅ Submit</button>
-      <button onclick="cancelT()" class="danger" style="margin-left:1rem">❌ Cancel Tournament</button>`;
-  }else{
-    h+=`<p style="font-size:1.3rem;color:#d4af37">👑 Champion: ${nm[t.winner]}</p>
-      <button onclick="finT()">Save</button>
-      <button onclick="cancelT()" class="danger" style="margin-left:1rem">❌ Delete Tournament</button>`;
-  }
-  h+='</div>';
-  document.getElementById('main').innerHTML=h;
-  window.addTR=()=>{document.getElementById('tmc').innerHTML+=`<div><select class="tmp">${opts}</select><select class="tml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;};
-}
-
-window.cancelT = function(){
-  if(!isAdminAllowed())return;
-  if(confirm('Delete this active tournament?')){
-    let db=g(); db.current.activeT=null; s(db);
-    render('tournament');
-  }
-};
-
-window.createTAct=()=>{
-  if(!isAdminAllowed())return;
-  let db=g(); let cur=db.current;
-  let pids=[]; document.querySelectorAll('.tp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
-  if(pids.length<2)return alert('Need 2+');
-  cur.activeT={name:document.getElementById('tn').value||'T',maps:parseInt(document.getElementById('tm').value)||5,tm:parseInt(document.getElementById('tc').value)||3,pids,cm:1,done:false,winner:null,mc:0,st:pids.map(id=>({pid:id,mw:0,tp:0}))};
-  s(db); render('tournament');
-};
-
-window.subTM=()=>{
-  if(!isAdminAllowed())return;
-  let db=g(); let cur=db.current; let t=cur.activeT;
-  let pos=[]; document.querySelectorAll('#tmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.tmp').value),place:parseInt(r.querySelector('.tml').value)});});
-  if(pos.length<2)return alert('Need 2+');
-  updateStats(pos);
-  db=g(); cur=db.current; t=cur.activeT;
-  let w=pos.find(p=>p.place===1);
-  if(w){let st=t.st.find(x=>x.pid===w.pid);if(st)st.mw++;}
-  let pts={1:18,2:15,3:13,4:12,5:11};
-  pos.forEach(e=>{let st=t.st.find(x=>x.pid===e.pid);if(st)st.tp+=(pts[e.place]||0);});
-  t.mc++; t.cm++;
-  if(t.cm>t.tm){t.done=true;t.winner=[...t.st].sort((a,b)=>b.mw-a.mw)[0].pid;}
-  s(db);
-  alert('✅ Match recorded!');
-  render('tournament');
-};
-
-window.finT=()=>{
-  if(!isAdminAllowed())return;
-  let db=g(); let cur=db.current; let t=cur.activeT;
-  let wp=cur.players.find(p=>p.id===t.winner);
-  if(wp)wp.tw++;
-  cur.tournaments.push({name:t.name,winner:t.winner,date:new Date().toISOString(),mc:t.mc});
-  cur.activeT=null;
-  updateHallOfFame(cur);
-  s(db);
-  alert('🏆 Tournament saved!');
-  render('tournament');
-};
-
-function thist(cur){
-  let h='<div class="card"><h3>History</h3>';
-  cur.tournaments.slice().reverse().forEach(t=>{let w=cur.players.find(p=>p.id===t.winner);h+=`<p>🏆 ${t.name} - ${w?.n} (${t.mc}m)</p>`;});
-  return h+'</div>';
-}
-
-// ---------- CUP ----------
-function cup(cur){
-  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
-  if(cur.activeCup) activeC(cur);
-  else createC(cur);
-}
-
-function createC(cur){
-  let cks=cur.players.map(p=>`<label><input type="checkbox" class="cp" value="${p.id}" checked> ${p.n}</label><br>`).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏆 Cup (10 Maps)</h2>
-    <div class="stat-box"><h3>Participants:</h3>${cks}</div>
-    <button onclick="createCAct()" style="width:100%">Create Cup</button></div>
-    ${cur.cups.length?chist(cur):''}`;
-}
-
-function activeC(cur){
-  let nm={}; cur.players.forEach(p=>nm[p.id]=p.n);
-  let opts=cur.activeCup.pids.map(id=>`<option value="${id}">${nm[id]}</option>`).join('');
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏆 Cup Match</h2><div id="cmc"></div>
-    <button onclick="addCR()">+ Player</button><button onclick="subCup()">🏁 Submit</button>
-    <button onclick="cancelCup()" class="danger" style="margin-left:1rem">❌ Cancel Cup</button></div>`;
-  window.addCR=()=>{document.getElementById('cmc').innerHTML+=`<div><select class="cmp">${opts}</select><select class="cml"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">5th</option></select></div>`;};
-}
-
-window.cancelCup=()=>{if(confirm('Delete this cup?')){let db=g();db.current.activeCup=null;s(db);render('cup');}};
-
-window.createCAct=()=>{
-  let db=g(); let cur=db.current;
-  let pids=[]; document.querySelectorAll('.cp:checked').forEach(cb=>pids.push(parseInt(cb.value)));
-  if(pids.length<2)return alert('Need 2+');
-  cur.activeCup={pids}; s(db); render('cup');
-};
-
-window.subCup=()=>{
-  let pos=[]; document.querySelectorAll('#cmc div').forEach(r=>{pos.push({pid:parseInt(r.querySelector('.cmp').value),place:parseInt(r.querySelector('.cml').value)});});
-  if(pos.length<2)return alert('Need 2+');
-  updateStats(pos);
-  let db=g(); let cur=db.current;
-  let w=pos.find(p=>p.place===1);
-  if(w){let wp=cur.players.find(p=>p.id===w.pid);if(wp)wp.cw++;}
-  cur.cups.push({type:'League Cup (10 Maps)',winner:w?.pid,date:new Date().toISOString()});
-  cur.activeCup=null;
-  updateHallOfFame(cur);
-  s(db);
-  alert('✅ Cup done!');
-  render('cup');
-};
-
-function chist(cur){
-  let h='<div class="card"><h3>History</h3>';
-  cur.cups.slice().reverse().forEach(c=>{let w=cur.players.find(p=>p.id===c.winner);h+=`<p>🥤 ${c.type} - ${w?.n}</p>`;});
-  return h+'</div>';
-}
-
-// ---------- HALL OF FAME ----------
-function hall(cur){
-  let n=id=>{let p=cur.players.find(x=>x.id===id);return p?p.n:'—';};
-  let goat=cur.players.find(x=>x.id===cur.hof.goat);
-  let sp=cur.players.find(x=>x.id===cur.hof.sp);
-  let lg=cur.players.find(x=>x.id===cur.hof.lg);
-  let mm=cur.players.find(x=>x.id===cur.hof.mm);
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🏛️ Hall of Fame</h2>
-    <div class="hof-card"><div class="hof-icon">🐐</div><div class="hof-title">GOAT - Highest Win Rate</div><div class="hof-name">${goat?goat.n:'—'}</div><div class="hof-stat">Win Rate: ${goat?goat.wr+'%':'—'}</div></div>
-    <div class="hof-card"><div class="hof-icon">🏆</div><div class="hof-title">Stumble Pro - Most Tournament Wins</div><div class="hof-name">${sp?sp.n:'—'}</div><div class="hof-stat">Tournament Wins: ${sp?sp.tw:'—'}</div></div>
-    <div class="hof-card"><div class="hof-icon">🌟</div><div class="hof-title">Legendary Guy - Most Cup Wins</div><div class="hof-name">${lg?lg.n:'—'}</div><div class="hof-stat">Cup Wins: ${lg?lg.cw:'—'}</div></div>
-    <div class="hof-card"><div class="hof-icon">⚡</div><div class="hof-title">Mythic Man - Highest MVP</div><div class="hof-name">${mm?mm.n:'—'}</div><div class="hof-stat">MVP Count: ${mm?mm.mvp:'—'}</div></div>
-  </div>`;
-}
-
-function hist(cur){
-  let h='<div class="card"><h2>📜 History</h2>';
-  if(cur.tournaments.length){h+='<h3>Tournaments</h3>';cur.tournaments.slice().reverse().forEach(t=>{let w=cur.players.find(p=>p.id===t.winner);h+=`<p>🏆 ${t.name} - ${w?.n}</p>`;});}
-  if(cur.cups.length){h+='<h3>Cups</h3>';cur.cups.slice().reverse().forEach(c=>{let w=cur.players.find(p=>p.id===c.winner);h+=`<p>🥤 ${c.type} - ${w?.n}</p>`;});}
-  document.getElementById('main').innerHTML=h+'</div>';
-}
-
-// ============ SEASONS ============
-function seasonsPage(db){
-  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
-  let html = '<div class="card"><h2>📅 Seasons</h2>';
-  html += `<button onclick="endSeason()">🏁 End Current Season & Start New</button>
-           <button onclick="importSeasonBackup()">📥 Import Season from Backup</button>`;
-  if(db.seasons.length === 0){
-    html += '<p style="margin-top:1rem">No past seasons yet.</p>';
-  }else{
-    html += '<h3>Past Seasons</h3>';
-    db.seasons.forEach((season, idx) => {
-      html += `<div class="stat-box season-card" onclick="viewSeason(${idx})" style="cursor:pointer;">
-        <b>${season.name}</b> (${season.players.length} players, ${season.tournaments.length} tournaments, ${season.cups.length} cups)
-        <br><small>Ended: ${new Date(season.date).toLocaleDateString()}</small>
-      </div>`;
-    });
-  }
-  html += '</div>';
-  document.getElementById('main').innerHTML = html;
-}
-
-window.endSeason = function(){
-  if(!isAdminAllowed()) return;
-  let name = prompt('Enter name for the new season:', 'Season ' + (g().seasons.length+2));
-  if(!name) return;
-  let db = g();
-  let cur = db.current;
-  let seasonData = {
-    id: db.seasons.length + 1,
-    name: name,
-    players: JSON.parse(JSON.stringify(cur.players)),
-    tournaments: JSON.parse(JSON.stringify(cur.tournaments)),
-    cups: JSON.parse(JSON.stringify(cur.cups)),
-    hof: JSON.parse(JSON.stringify(cur.hof)),
-    date: new Date().toISOString()
-  };
-  db.seasons.push(seasonData);
-  db.current = createFreshCurrent();
-  s(db);
-  alert('Season archived! New season started fresh.');
-  render('seasons');
-};
-
-window.importSeasonBackup = function(){
-  let input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = function(e){
-    let file = e.target.files[0];
-    if(!file) return;
-    let reader = new FileReader();
-    reader.onload = function(ev){
-      try{
-        let data = JSON.parse(ev.target.result);
-        let players, tournaments, cups, hof;
-        if(data.current){
-          players = data.current.players;
-          tournaments = data.current.tournaments;
-          cups = data.current.cups;
-          hof = data.current.hof || {};
-        }else if(data.players || data.p){
-          players = data.players || data.p;
-          tournaments = data.tournaments || data.t || [];
-          cups = data.cups || data.c || [];
-          hof = data.hof || {};
-          if(hof.tk && !hof.sp){ hof.sp = hof.tk; delete hof.tk; }
-          if(hof.lp && !hof.lg){ hof.lg = hof.lp; delete hof.lp; }
-          if(!hof.goat) hof.goat = null;
-          if(!hof.sp) hof.sp = null;
-          if(!hof.lg) hof.lg = null;
-          if(!hof.mm) hof.mm = null;
-        }else{
-          alert('❌ Invalid backup file!');
-          return;
-        }
-        let seasonName = prompt('Enter a name for this imported season:', 'Imported Season');
-        if(!seasonName) return;
-        let db = g();
-        db.seasons.push({
-          id: db.seasons.length+1,
-          name: seasonName,
-          players: players,
-          tournaments: tournaments,
-          cups: cups,
-          hof: hof,
-          date: new Date().toISOString()
-        });
-        s(db);
-        alert('✅ Season imported successfully!');
-        render('seasons');
-      }catch(e){
-        alert('❌ Error reading file: ' + e.message);
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-};
-
-window.viewSeason = function(idx){
-  let db = g();
-  let season = db.seasons[idx];
-  if(!season) return;
-  let players = season.players;
-  let sorted = [...players].sort((a,b)=>(b.wr||0)-(a.wr||0)||(b.mvp||0)-(a.mvp||0)||(b.mp||0)-(a.mp||0));
-  let n = id => {let p = players.find(x=>x.id===id); return p?p.n:'—';};
-  let html = `<div class="card"><h2>📅 ${season.name}</h2>
-    <p>Date: ${new Date(season.date).toLocaleDateString()}</p>
-    <button onclick="render('seasons')">← Back to Seasons</button>
-    <h3>🏅 Leaderboard</h3>
-    <table><tr><th>Rank</th><th>Player</th><th>Win Rate</th><th>MVP</th><th>Matches</th><th>W/L</th></tr>`;
-  sorted.forEach((p,i)=>{
-    html += `<tr><td>#${i+1}</td><td><b>${p.n}</b></td><td>${p.wr||0}%</td><td>${p.mvp||0}</td><td>${p.mp||0}</td><td>${p.w||0}W/${p.l||0}L</td></tr>`;
-  });
-  html += `</table>
-    <h3>🏛️ Hall of Fame</h3>
-    <div>🐐 GOAT: ${n(season.hof?.goat)} | 🏆 Stumble Pro: ${n(season.hof?.sp)} | 🌟 Legendary Guy: ${n(season.hof?.lg)} | ⚡ Mythic Man: ${n(season.hof?.mm)}</div>
-    <h3>👥 Players Stats</h3>`;
-  players.forEach(p=>{
-    html += `<div class="stat-box"><b>${p.n}</b> (@${p.u})<br>
-      Matches: ${p.mp||0} | Wins: ${p.w||0} | Losses: ${p.l||0} | WR: ${p.wr||0}%<br>
-      MVPs: ${p.mvp||0} | Points: ${p.pts||0} | Tourney Wins: ${p.tw||0} | Cup Wins: ${p.cw||0}</div>`;
-  });
-  html += '</div>';
-  document.getElementById('main').innerHTML = html;
-};
-
-// ============ ADMIN ============
-function adm(db){
-  if(!isAdminAllowed()){document.getElementById('main').innerHTML='<div class="card"><h2>🔒 Access Denied</h2></div>';return;}
-  document.getElementById('main').innerHTML=`<div class="card"><h2>🔧 Admin</h2>
-    <p style="color:#4c4;margin-bottom:1rem">✅ Admin mode active</p>
-    <button onclick="exp()">📤 Export Full Backup</button>
-    <input type="file" id="imf" accept=".json"><button onclick="imp()">📥 Import Full Backup</button>
-    <button onclick="changePwd()">🔑 Change Password</button>
-    <button onclick="rst()" style="background:#c44;color:#fff">⚠️ Reset All</button></div>`;
-  window.exp=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(g(),null,2)],{type:'application/json'}));a.download='stumble_backup.json';a.click();};
-  window.imp=()=>{
-    let f=document.getElementById('imf').files[0];
-    if(!f)return;
-    let r=new FileReader();
-    r.onload=e=>{
-      try{
-        let data = JSON.parse(e.target.result);
-        if(!data.seasons || !data.current){
-          data = migrateOldData(data);
-        }
-        localStorage.setItem(K, JSON.stringify(data));
-        alert('✅ Database imported! Refreshing...');
-        location.reload();
-      }catch(err){
-        alert('❌ Invalid JSON file.');
-      }
-    };
-    r.readAsText(f);
-  };
-  window.rst=()=>{if(confirm('Delete all?')){localStorage.removeItem(K);location.reload();}};
-  window.changePwd=()=>{let np=prompt('Enter new password:');if(np&&np.length>=4){ADMIN_PASSWORD=np;alert('Password changed!');}};
-}
-
-// Initialize Hall of Fame on current
-let initDB = g();
-updateHallOfFame(initDB.current);
-s(initDB);
-render('dashboard');
-</script>
 </body>
-</html>
+    </html>
