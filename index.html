@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050508">
+<title>PROJECT PHOENIX – Battle Royale</title>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<style>
+:root{--bg:#050508;--ac:#00b4ff;--ac2:#00e5ff;--gl:rgba(0,180,255,.5);--ok:#00e676;--wn:#ffab00;--dn:#ff3d57;--t:#fff;--t2:#a8b0c0;--t3:#6b7385;--g:rgba(12,16,26,.78);--bd:rgba(255,255,255,.1);--sh:0 12px 40px rgba(0,0,0,.55);--r:14px;--rl:20px;--f:.18s;--n:.32s;--s:.48s;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--font:'Segoe UI',system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--t);user-select:none;-webkit-user-select:none;touch-action:manipulation;overscroll-behavior:none;position:fixed;inset:0}
+#orientation-lock{position:fixed;inset:0;z-index:9999;background:rgba(5,5,8,.94);backdrop-filter:blur(16px);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px}
+#orientation-lock.active{display:flex}
+.orient-phone{width:64px;height:100px;border:3px solid var(--ac);border-radius:12px;margin-bottom:24px;animation:pRot 2.2s ease-in-out infinite;box-shadow:0 0 24px var(--gl);position:relative}
+.orient-phone::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:24px;height:4px;background:var(--ac);border-radius:2px;opacity:.7}
+@keyframes pRot{0%,20%{transform:rotate(0)}40%,60%{transform:rotate(90deg)}80%,100%{transform:rotate(0)}}
+.orient-title{font-size:1.2rem;font-weight:700;margin-bottom:8px}.orient-sub{font-size:.88rem;color:var(--t2);max-width:260px}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity var(--s),filter var(--s),transform var(--s);z-index:10;padding-top:var(--st);padding-bottom:var(--sb)}
+.screen.active{opacity:1;pointer-events:auto;z-index:20}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;background:#050508}
+.bg-ov{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 20% 10%,rgba(0,100,180,.12),transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(0,180,255,.08),transparent 45%);animation:ovP 14s ease-in-out infinite alternate}
+@keyframes ovP{0%{opacity:.8}100%{opacity:1}}
+.bg-rays{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;opacity:.3}
+.bg-rays::before,.bg-rays::after{content:'';position:absolute;top:-30%;width:2px;height:160%;background:linear-gradient(to bottom,transparent,rgba(0,180,255,.3),transparent);animation:ray 20s linear infinite}
+.bg-rays::before{left:18%;transform:rotate(15deg)}.bg-rays::after{left:72%;animation-delay:-8s;opacity:.5}
+@keyframes ray{0%{transform:translateY(-15%) rotate(15deg);opacity:.1}50%{opacity:.35}100%{transform:translateY(15%) rotate(15deg);opacity:.1}}
+#splash-screen{z-index:100;background:var(--bg);justify-content:center;align-items:center}
+.splogo{font-size:clamp(2rem,6vw,3.8rem);font-weight:800;letter-spacing:.12em;background:linear-gradient(135deg,#fff,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:lg 2.4s ease-in-out infinite alternate;margin-bottom:8px}
+.spsub{font-size:clamp(.85rem,2.2vw,1.1rem);color:var(--t2);letter-spacing:.35em;text-transform:uppercase;animation:fUp 1s ease .4s both}
+@keyframes lg{0%{filter:drop-shadow(0 0 12px rgba(0,180,255,.3))}100%{filter:drop-shadow(0 0 28px rgba(0,180,255,.7))}}
+@keyframes fUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+#loading-screen{z-index:90;justify-content:center;align-items:center;background:var(--bg)}
+.ldbox{width:min(90%,380px);text-align:center}
+.ldspin{width:52px;height:52px;margin:0 auto 20px;border:3px solid rgba(0,180,255,.15);border-top-color:var(--ac);border-radius:50%;animation:sp .9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ldtitle{font-size:1rem;font-weight:600;letter-spacing:.1em;margin-bottom:14px}
+.ldtrack{width:100%;height:5px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.ldfill{height:100%;width:0%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:99px;box-shadow:0 0 12px var(--gl);transition:width .2s}
+.ldpct{font-size:.78rem;color:var(--t2);margin-bottom:16px}.ldtip{font-size:.76rem;color:var(--t3);min-height:2.2em;transition:opacity .35s}
+#main-menu{z-index:30;padding:0;overflow:hidden}#main-menu.dimmed{opacity:.2;filter:blur(8px);pointer-events:none;transform:scale(.985)}
+.lobby{width:100%;height:100%;display:grid;grid-template-rows:auto 1fr auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:12px;background:linear-gradient(180deg,rgba(5,5,12,.85),transparent);animation:sDown .5s ease both}
+.tl,.tr{display:flex;align-items:center;gap:10px}.tc{display:flex;align-items:center;gap:12px}
+.pmini{display:flex;align-items:center;gap:10px;background:var(--g);backdrop-filter:blur(16px);border:1px solid var(--bd);border-radius:99px;padding:5px 14px 5px 5px}
+.avw{position:relative}.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,var(--ac),#0066aa);display:flex;align-items:center;justify-content:center;font-weight:700;border:2px solid rgba(255,255,255,.2);box-shadow:0 0 12px var(--gl)}
+.odot{position:absolute;bottom:0;right:0;width:11px;height:11px;background:var(--ok);border-radius:50%;border:2px solid #0a0d14;animation:pDot 2s ease-in-out infinite}
+@keyframes pDot{0%,100%{box-shadow:0 0 4px rgba(0,230,118,.5)}50%{box-shadow:0 0 10px rgba(0,230,118,.9)}}
+.pn{font-size:.88rem;font-weight:700}.pid{font-size:.65rem;color:var(--t3)}
+.lvg{background:rgba(0,180,255,.15);border:1px solid rgba(0,180,255,.3);color:var(--ac);font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:99px}
+.cur{display:flex;align-items:center;gap:5px;background:var(--g);border:1px solid var(--bd);border-radius:99px;padding:6px 12px;font-size:.8rem;font-weight:600}
+.ib{width:38px;height:38px;border-radius:50%;background:var(--g);border:1px solid var(--bd);color:var(--t2);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--f);position:relative}
+.ib:hover{background:rgba(0,180,255,.15);color:var(--ac);transform:scale(1.08)}.ib .bdg{position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:var(--dn);border-radius:50%;font-size:.55rem;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+.lbody{display:grid;grid-template-columns:minmax(160px,200px) 1fr minmax(180px,240px);gap:12px;padding:4px 14px 8px;min-height:0;overflow:hidden}
+.lpanel{display:flex;flex-direction:column;gap:8px;overflow-y:auto;animation:fLeft .5s ease .1s both}
+@keyframes fLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.bst{position:relative;width:100%;padding:16px 12px;border:none;border-radius:var(--r);background:linear-gradient(135deg,#0090d4,var(--ac),#00c8e8);color:#fff;font-family:inherit;font-size:.95rem;font-weight:800;letter-spacing:.1em;cursor:pointer;box-shadow:0 4px 24px rgba(0,180,255,.45);border:1px solid rgba(0,220,255,.4);transition:transform var(--f),box-shadow var(--f);min-height:52px}
+.bst:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 6px 32px rgba(0,180,255,.6)}.bst:active{transform:scale(.97)}
+.nb{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--g);color:var(--t2);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:all var(--f);text-align:left}
+.nb:hover:not(:disabled){background:rgba(0,180,255,.12);color:var(--t);border-color:rgba(0,180,255,.3);transform:translateX(3px)}
+.nb:disabled{opacity:.4;pointer-events:none;filter:grayscale(.4)}.nb .ni{font-size:1.05rem;width:22px;text-align:center}
+.cstage{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:0;animation:fUp .55s ease .15s both}
+.holo{position:relative;width:min(100%,280px);height:min(55vh,340px);display:flex;align-items:center;justify-content:center}
+.hbody{width:80px;height:160px;position:relative;animation:hBr 3.5s ease-in-out infinite}
+.hhead{width:36px;height:36px;background:linear-gradient(180deg,rgba(0,200,255,.5),rgba(0,140,220,.3));border:1.5px solid rgba(0,220,255,.6);border-radius:50%;margin:0 auto 4px;box-shadow:0 0 20px rgba(0,180,255,.4)}
+.htorso{width:50px;height:60px;background:linear-gradient(180deg,rgba(0,180,255,.35),rgba(0,100,180,.2));border:1.5px solid rgba(0,200,255,.45);border-radius:8px 8px 4px 4px;margin:0 auto}
+.hlegs{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.hleg{width:16px;height:48px;background:linear-gradient(180deg,rgba(0,160,230,.3),rgba(0,80,150,.15));border:1.5px solid rgba(0,180,255,.35);border-radius:4px}
+@keyframes hBr{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.hplat{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);width:140px;height:14px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,180,255,.35),transparent 70%);box-shadow:0 0 30px rgba(0,180,255,.3);animation:hP 2.5s ease-in-out infinite}
+@keyframes hP{0%,100%{opacity:.6;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.08)}}
+.hring{position:absolute;bottom:5%;left:50%;transform:translateX(-50%);width:160px;height:40px;border:1.5px solid rgba(0,180,255,.25);border-radius:50%;animation:hR 8s linear infinite}
+@keyframes hR{to{transform:translateX(-50%) rotate(360deg)}}
+.hlbl{margin-top:8px;font-size:.72rem;color:var(--t3);letter-spacing:.15em;text-transform:uppercase}
+.llogo{font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:800;letter-spacing:.1em;background:linear-gradient(135deg,#fff,var(--ac));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.rpanel{display:flex;flex-direction:column;gap:8px;overflow-y:auto;animation:fRight .5s ease .2s both}
+@keyframes fRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.icard{background:var(--g);backdrop-filter:blur(14px);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;transition:all var(--f);position:relative;overflow:hidden}
+.icard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:.5}
+.icard:hover{border-color:rgba(0,180,255,.3);transform:translateY(-2px)}
+.ct{font-size:.78rem;font-weight:700;color:var(--ac);margin-bottom:4px}.cb{font-size:.72rem;color:var(--t2);line-height:1.4}
+.ctg{display:inline-block;margin-top:6px;font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:99px;background:rgba(0,180,255,.12);color:var(--ac);border:1px solid rgba(0,180,255,.2)}
+.ctg.soon{background:rgba(255,171,0,.12);color:var(--wn);border-color:rgba(255,171,0,.25)}
+.bbar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;gap:12px;background:linear-gradient(0deg,rgba(5,5,12,.9),transparent);animation:fUp .45s ease .3s both;font-size:.7rem;color:var(--t3)}
+.tick{flex:1;overflow:hidden;white-space:nowrap;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ticki{display:inline-block;animation:tS 28s linear infinite}
+@keyframes tS{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.bmeta{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px rgba(0,230,118,.6);display:inline-block;margin-right:4px}
+.pscr{justify-content:center;align-items:center;background:rgba(0,0,0,.6);backdrop-filter:blur(12px);z-index:50;opacity:0;pointer-events:none;transition:opacity var(--s);padding:16px}
+.pscr.active{opacity:1;pointer-events:auto}
+.pnl{width:100%;max-width:520px;max-height:min(88vh,580px);background:var(--g);backdrop-filter:blur(24px);border:1px solid var(--bd);border-radius:var(--rl);box-shadow:0 24px 60px rgba(0,0,0,.65);display:flex;flex-direction:column;overflow:hidden;transform:scale(.92) translateY(12px);opacity:0;transition:transform var(--s) cubic-bezier(.22,1,.36,1),opacity var(--s)}
+.pscr.active .pnl{transform:scale(1) translateY(0);opacity:1}
+.pnlw{max-width:640px}
+.phdr{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.pback{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--t2);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--f)}
+.pback:hover{background:rgba(0,180,255,.15);color:var(--ac)}
+.ptitle{font-size:1.05rem;font-weight:700;flex:1}
+.pbody{padding:16px 18px;overflow-y:auto;flex:1}
+.slay{display:grid;grid-template-columns:110px 1fr;gap:16px;min-height:280px}
+.snav{display:flex;flex-direction:column;gap:4px}
+.snb{padding:10px 12px;border:none;border-radius:10px;background:transparent;color:var(--t3);font-family:inherit;font-size:.8rem;font-weight:600;text-align:left;cursor:pointer}
+.snb.active{background:rgba(0,180,255,.15);color:var(--ac)}
+.spane{display:none}.spane.active{display:block}
+.sg{margin-bottom:16px}.sl{display:flex;justify-content:space-between;font-size:.82rem;color:var(--t2);margin-bottom:8px}
+.sv{color:var(--ac);font-weight:600;font-size:.8rem}
+.slid{-webkit-appearance:none;width:100%;height:5px;background:rgba(255,255,255,.1);border-radius:99px}
+.slid::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ac);cursor:pointer;box-shadow:0 0 10px var(--gl);border:2px solid #fff}
+.sgrp{display:flex;gap:6px;flex-wrap:wrap}
+.sopt{flex:1;min-width:60px;padding:9px 6px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--t2);font-size:.75rem;font-weight:600;text-align:center;cursor:pointer}
+.sopt.active{background:rgba(0,180,255,.18);border-color:var(--ac);color:var(--ac)}
+.pact{display:flex;gap:8px;margin-top:8px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border:1px solid var(--bd);border-radius:12px;background:var(--g);color:var(--t);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:all var(--f);min-height:44px}
+.btn:hover{transform:translateY(-1px);border-color:rgba(0,180,255,.3)}
+.btn:active{transform:scale(.96)}
+.btn-p{background:linear-gradient(135deg,#0090d4,var(--ac));border-color:rgba(0,180,255,.4);box-shadow:0 4px 18px rgba(0,180,255,.35)}
+.btn-s{padding:10px 14px;font-size:.84rem;min-height:40px}
+.btn-d{background:rgba(255,61,87,.12);border-color:rgba(255,61,87,.3);color:var(--dn)}
+.acont h3{font-size:.9rem;color:var(--ac);margin:12px 0 4px}.acont h3:first-child{margin-top:0}
+.acont p{font-size:.82rem;color:var(--t2);line-height:1.5;margin-bottom:8px}
+.ameta{font-size:.72rem;color:var(--t3);margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
+.tl{border-left:2px solid rgba(0,180,255,.25);padding-left:14px;margin:10px 0}
+.tli{margin-bottom:10px;position:relative}
+.tli::before{content:'';position:absolute;left:-19px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--ac)}
+.tv{font-size:.78rem;font-weight:700;color:var(--ac)}.td{font-size:.72rem;color:var(--t2)}
+#popup-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity var(--n);padding:16px}
+#popup-overlay.active{opacity:1;pointer-events:auto}
+.popup{background:var(--g);backdrop-filter:blur(22px);border:1px solid var(--bd);border-radius:var(--rl);padding:22px 20px;max-width:340px;width:100%;box-shadow:var(--sh);transform:scale(.9);transition:transform var(--n) cubic-bezier(.22,1,.36,1);text-align:center}
+#popup-overlay.active .popup{transform:scale(1)}
+.pt{font-size:1.05rem;font-weight:700;margin-bottom:8px}.pm{font-size:.86rem;color:var(--t2);line-height:1.45;margin-bottom:18px}
+.pa{display:flex;gap:8px;justify-content:center}
+#toast-container{position:fixed;top:calc(var(--st)+12px);right:12px;z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none;max-width:min(300px,calc(100vw - 24px))}
+.toast{background:var(--g);backdrop-filter:blur(14px);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;font-size:.82rem;box-shadow:var(--sh);display:flex;align-items:center;gap:8px;animation:tIn .3s ease both;pointer-events:auto}
+.toast.out{animation:tOut .25s ease both}.toast.info{border-left:3px solid var(--ac)}.toast.success{border-left:3px solid var(--ok)}
+@keyframes tIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(-10px)}}
+@keyframes sDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+#game-screen{z-index:40;background:#000;padding:0}
+#game-canvas{width:100%;height:100%;display:block;outline:none;touch-action:none}
+.hud{position:absolute;inset:0;pointer-events:none;z-index:45;padding:var(--st) 0 var(--sb)}
+.hud-top{position:absolute;top:calc(var(--st)+10px);left:12px;right:12px;display:flex;justify-content:space-between}
+.hp{background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 12px;font-size:.8rem;font-weight:600}
+.hs{display:flex;gap:8px;font-size:.72rem;color:var(--t2)}
+.hst{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:5px 10px}
+.hpb{position:absolute;top:calc(var(--st)+10px);left:50%;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:1rem;cursor:pointer;pointer-events:auto;display:flex;align-items:center;justify-content:center}
+.mc{position:absolute;inset:0;pointer-events:none;z-index:46;display:none}.mc.show{display:block}
+.jz{position:absolute;bottom:calc(var(--sb)+20px);width:130px;height:130px;pointer-events:auto;touch-action:none}
+.jz.l{left:20px}.jz.r{right:20px}
+.jb{width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.jk{width:48px;height:48px;border-radius:50%;background:rgba(0,180,255,.45);border:2px solid rgba(0,220,255,.6);box-shadow:0 0 16px rgba(0,180,255,.35);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ab{position:absolute;bottom:calc(var(--sb)+30px);right:160px;display:flex;flex-direction:column;gap:10px;pointer-events:auto}
+.abtn{width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.2);color:#fff;font-size:.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.abtn:active,.abtn.active{background:rgba(0,180,255,.4);border-color:var(--ac);transform:scale(.92)}
+#pause-overlay{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+#pause-overlay.active{display:flex}
+.pati{font-size:1.5rem;font-weight:800;letter-spacing:.12em;margin-bottom:16px}
+.pab{width:min(260px,80%);padding:14px;border-radius:12px;background:var(--g);border:1px solid var(--bd);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer}
+.pab:hover{border-color:var(--ac);background:rgba(0,180,255,.15)}
+.pab.pr{background:linear-gradient(135deg,#0090d4,var(--ac));border-color:rgba(0,180,255,.4);box-shadow:0 4px 20px rgba(0,180,255,.35)}
+#trans{position:fixed;inset:0;z-index:150;background:#050508;opacity:0;pointer-events:none;transition:opacity .5s;display:flex;align-items:center;justify-content:center}
+#trans.active{opacity:1;pointer-events:auto}
+.trtx{font-size:.9rem;letter-spacing:.15em;color:var(--t2);animation:pul 1.2s ease infinite}
+@keyframes pul{0%,100%{opacity:.5}50%{opacity:1}}
+#debug-panel{position:fixed;bottom:8px;left:8px;z-index:400;background:rgba(0,0,0,.75);border:1px solid rgba(0,180,255,.3);border-radius:8px;padding:8px 10px;font-size:.65rem;font-family:monospace;color:#8f8;line-height:1.5;display:none;max-width:220px}
+#debug-panel.active{display:block}
+@media(max-width:800px){.lbody{grid-template-columns:minmax(120px,150px) 1fr minmax(140px,180px);gap:8px;padding:4px 8px}.nb{padding:9px 8px;font-size:.75rem}.bst{padding:12px 8px;font-size:.85rem;min-height:46px}.holo{height:min(45vh,260px)}}
+@media(max-width:600px){.lbody{grid-template-columns:1fr}.lpanel{flex-direction:row;flex-wrap:wrap;gap:6px}.bst{width:100%;order:-1}.nb{flex:1;min-width:90px;justify-content:center}.rpanel{flex-direction:row;overflow-x:auto}.icard{min-width:140px;flex-shrink:0}.tc{display:none}.slay{grid-template-columns:1fr}.snav{flex-direction:row;flex-wrap:wrap}}
+@media(orientation:landscape) and (max-height:480px){.holo{height:min(40vh,200px)}.hbody{transform:scale(.75)}.topbar{padding:6px 10px}.bst{min-height:40px;padding:10px;font-size:.8rem}}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="bg-ov"></div>
+<div class="bg-rays"></div>
+<div id="orientation-lock"><div class="orient-phone"></div><div class="orient-title">Please rotate your device</div><div class="orient-sub">Project Phoenix is designed for Landscape Mode</div></div>
+<div id="splash-screen" class="screen active"><div class="splogo">PROJECT PHOENIX</div><div class="spsub">Battle Royale</div></div>
+<div id="loading-screen" class="screen"><div class="ldbox"><div class="ldspin"></div><div class="ldtitle">LOADING</div><div class="ldtrack"><div class="ldfill" id="loading-bar"></div></div><div class="ldpct" id="loading-percent">0%</div><div class="ldtip" id="loading-tip">Preparing the battlefield...</div></div></div>
+
+<div id="main-menu" class="screen">
+<div class="lobby">
+<div class="topbar">
+<div class="tl"><div class="pmini" id="profile-card"><div class="avw"><div class="av" id="player-avatar">P</div><div class="odot"></div></div><div><div class="pn" id="player-name">Commander</div><div class="pid" id="player-id">ID: PHX-000000</div></div><div class="lvg">Lv.<span id="player-level">1</span></div></div></div>
+<div class="tc"><div class="cur"><span style="color:#ffd54f">●</span> <span id="player-coins">0</span></div><div class="cur"><span style="color:#00e5ff">◆</span> <span id="player-diamonds">0</span></div></div>
+<div class="tr"><button class="ib" id="btn-mail" disabled>✉</button><button class="ib" id="btn-notif">🔔<span class="bdg">2</span></button><button class="ib" id="btn-friends" disabled>👥</button><button class="ib" id="btn-settings">⚙</button><button class="ib" id="btn-about">ℹ</button></div>
+</div>
+<div class="lbody">
+<div class="lpanel">
+<button class="bst" id="btn-start">▶ START GAME</button>
+<button class="nb" disabled><span class="ni">👤</span> Character</button>
+<button class="nb" disabled><span class="ni">🎒</span> Inventory</button>
+<button class="nb" disabled><span class="ni">🛒</span> Store</button>
+<button class="nb" disabled><span class="ni">🔫</span> Weapons</button>
+<button class="nb" disabled><span class="ni">🏆</span> Collection</button>
+<button class="nb" disabled><span class="ni">🎯</span> Achievements</button>
+<button class="nb" disabled><span class="ni">⚔</span> Clan</button>
+<button class="nb" disabled><span class="ni">📊</span> Leaderboard</button>
+</div>
+<div class="cstage">
+<div class="llogo">PROJECT PHOENIX</div>
+<div class="holo"><div class="hbody"><div class="hhead"></div><div class="htorso"></div><div class="hlegs"><div class="hleg"></div><div class="hleg"></div></div></div><div class="hplat"></div><div class="hring"></div></div>
+<div class="hlbl">Operative // Placeholder</div>
+</div>
+<div class="rpanel">
+<div class="icard"><div class="ct">DAILY LOGIN</div><div class="cb">Claim rewards every day. Day 1: 100 Coins</div><span class="ctg">Available</span></div>
+<div class="icard"><div class="ct">EVENTS</div><div class="cb">Training Grounds open. Explore freely.</div><span class="ctg">Live</span></div>
+<div class="icard"><div class="ct">BATTLE PASS</div><div class="cb">Season 0 – Foundation. Coming soon.</div><span class="ctg soon">Soon</span></div>
+<div class="icard"><div class="ct">RANKED</div><div class="cb">Competitive matchmaking in a future update.</div><span class="ctg soon">Soon</span></div>
+<div class="icard"><div class="ct">MISSIONS</div><div class="cb">Daily and weekly challenges for rewards.</div><span class="ctg soon">Soon</span></div>
+</div>
+</div>
+<div class="bbar">
+<div class="tick"><div class="ticki" id="news-ticker">Welcome to Project Phoenix Training Grounds • Explore freely • No combat yet • Version 2.0 • More systems coming •&nbsp;&nbsp;&nbsp;Welcome to Project Phoenix Training Grounds • Explore freely • No combat yet • Version 2.0 • More systems coming •&nbsp;&nbsp;&nbsp;</div></div>
+<div class="bmeta"><span><span class="sdot"></span>Online</span><span id="version-badge">v2.0.0</span><span id="fps-display">-- FPS</span></div>
+</div>
+</div>
+</div>
+<div id="settings-screen" class="screen pscr">
+<div class="pnl pnlw"><div class="phdr"><button class="pback" id="settings-close">‹</button><div class="ptitle">Settings</div></div>
+<div class="pbody"><div class="slay"><div class="snav">
+<button class="snb active" data-pane="audio">Audio</button>
+<button class="snb" data-pane="graphics">Graphics</button>
+<button class="snb" data-pane="controls">Controls</button>
+<button class="snb" data-pane="general">General</button>
+</div><div>
+<div class="spane active" id="pane-audio">
+<div class="sg"><div class="sl"><span>Music Volume</span><span class="sv" id="music-vol-val">70%</span></div><input type="range" class="slid" id="slider-music" min="0" max="100" value="70"></div>
+<div class="sg"><div class="sl"><span>SFX Volume</span><span class="sv" id="sfx-vol-val">80%</span></div><input type="range" class="slid" id="slider-sfx" min="0" max="100" value="80"></div>
+</div>
+<div class="spane" id="pane-graphics">
+<div class="sg"><div class="sl"><span>Graphics Quality</span></div><div class="sgrp" id="graphics-select"><div class="sopt" data-value="low">Low</div><div class="sopt active" data-value="medium">Medium</div><div class="sopt" data-value="high">High</div></div></div>
+<div class="sg"><div class="sl"><span>Target FPS</span></div><div class="sgrp" id="fps-select"><div class="sopt" data-value="30">30</div><div class="sopt active" data-value="60">60</div><div class="sopt" data-value="120">120</div></div></div>
+</div>
+<div class="spane" id="pane-controls">
+<div class="sg"><div class="sl"><span>Sensitivity</span><span class="sv" id="sens-val">50%</span></div><input type="range" class="slid" id="slider-sensitivity" min="0" max="100" value="50"></div>
+<div class="sg"><div class="sl"><span>Camera Distance</span><span class="sv" id="cam-dist-val">5</span></div><input type="range" class="slid" id="slider-camdist" min="3" max="10" value="5" step="0.5"></div>
+</div>
+<div class="spane" id="pane-general">
+<div class="sg"><div class="sl"><span>Language</span></div><div class="sgrp" id="lang-select"><div class="sopt active" data-value="en">English</div><div class="sopt" data-value="es">Español</div><div class="sopt" data-value="pt">Português</div></div></div>
+</div>
+<div class="pact"><button class="btn btn-s btn-d" id="btn-reset-settings">Reset</button><button class="btn btn-s btn-p" id="btn-settings-done" style="flex:1">Done</button></div>
+</div></div></div></div>
+</div>
+<div id="about-screen" class="screen pscr">
+<div class="pnl pnlw"><div class="phdr"><button class="pback" id="about-close">‹</button><div class="ptitle">About</div></div>
+<div class="pbody acont">
+<h3>PROJECT PHOENIX</h3><p>A premium browser-based Battle Royale. Survive, strategize, and become the last one standing.</p>
+<h3>Version Timeline</h3>
+<div class="tl">
+<div class="tli"><div class="tv">v1.0 – Foundation</div><div class="td">Core systems, save, audio, UI managers</div></div>
+<div class="tli"><div class="tv">v1.1 – UI Polish</div><div class="td">Landscape lock, game windows, native feel</div></div>
+<div class="tli"><div class="tv">v2.0 – Playable Prototype</div><div class="td">AAA lobby, Babylon.js world, movement, camera</div></div>
+</div>
+<h3>Roadmap</h3><p>Versions 3–25 will add weapons, combat, vehicles, AI, multiplayer, inventory, ranked, and full BR mechanics.</p>
+<h3>Credits</h3><p>Built with modern web tech + Babylon.js. Architecture designed for long-term expansion.</p>
+<div class="ameta">© 2026 Project Phoenix · All rights reserved.</div>
+</div></div></div>
+<div id="game-screen" class="screen">
+<canvas id="game-canvas"></canvas>
+<div class="hud" id="game-hud">
+<div class="hud-top"><div class="hp" id="hud-player-name">Commander</div><div class="hs"><div class="hst" id="hud-fps">60 FPS</div><div class="hst" id="hud-ping">-- ms</div></div></div>
+<button class="hpb" id="btn-pause">❚❚</button>
+</div>
+<div class="mc" id="mobile-controls">
+<div class="jz l" id="joy-move"><div class="jb"><div class="jk" id="joy-move-knob"></div></div></div>
+<div class="jz r" id="joy-look"><div class="jb"><div class="jk" id="joy-look-knob"></div></div></div>
+<div class="ab"><button class="abtn" id="btn-jump">JUMP</button><button class="abtn" id="btn-sprint">SPRINT</button><button class="abtn" id="btn-crouch">CROUCH</button></div>
+</div>
+<div id="pause-overlay"><div class="pati">PAUSED</div><button class="pab pr" id="btn-resume">Resume</button><button class="pab" id="btn-pause-settings">Settings</button><button class="pab" id="btn-return-lobby">Return to Lobby</button></div>
+</div>
+<div id="trans"><div class="trtx">ENTERING TRAINING GROUNDS...</div></div>
+<div id="popup-overlay"><div class="popup"><div class="pt" id="popup-title">Title</div><div class="pm" id="popup-message">Message</div><div class="pa" id="popup-actions"></div></div></div>
+<div id="toast-container"></div>
+<div id="debug-panel"></div>
+
+<script>
+'use strict';
+/* PROJECT PHOENIX v2.0.0 – AAA Lobby + Playable 3D Training World
+   VERSION HISTORY: v1.0 Foundation | v1.1 UI Polish | v2.0 Lobby+Babylon+Movement
+*/
+const CONFIG={gameName:'PROJECT PHOENIX',version:'2.0.0',saveVersion:2,targetFPS:60,debug:false,splashDuration:2600,loadingMinDuration:2000,
+defaultVolumes:{master:1,music:.7,sfx:.8,ui:.75},defaultGraphics:'medium',defaultFPS:60,defaultLanguage:'en',defaultSensitivity:50,defaultCamDistance:5,
+loadingTips:['Stay inside the safe zone.','Collect better equipment.','Watch your surroundings.','Vehicles help you travel faster.','Higher ground gives better visibility.','Listen carefully for footsteps.'],
+player:{walkSpeed:4.5,runSpeed:7.5,sprintSpeed:11,crouchSpeed:2.2,jumpForce:7.5,gravity:22,height:1.8,accel:18,decel:22},
+camera:{minDist:2.5,maxDist:12,height:1.6,lag:.12}};
+const Logger={info(...a){if(CONFIG.debug)console.log('[PHOENIX]',...a)},warn(...a){console.warn('[PHOENIX]',...a)},error(...a){console.error('[PHOENIX]',...a)}};
+class EventSystem{constructor(){this._m=new Map()}on(e,cb,ctx=null){if(!this._m.has(e))this._m.set(e,[]);this._m.get(e).push({cb,ctx});return()=>this.off(e,cb)}off(e,cb){const l=this._m.get(e);if(!l)return;const i=l.findIndex(x=>x.cb===cb);if(i>=0)l.splice(i,1)}emit(e,d=null){const l=this._m.get(e);if(!l)return;[...l].forEach(({cb,ctx})=>{try{cb.call(ctx,d)}catch(err){Logger.error(e,err)}})}}
+const Events=new EventSystem();
+class ObjectPool{constructor(f,r,s=16){this._f=f;this._r=r;this._free=[];for(let i=0;i<s;i++)this._free.push(f())}acquire(){return this._free.length?this._free.pop():this._f()}release(o){if(this._r)this._r(o);this._free.push(o)}}
+const Utils={clamp(v,a,b){return Math.max(a,Math.min(b,v))},lerp(a,b,t){return a+(b-a)*t},$(s){return document.querySelector(s)},$$(s){return document.querySelectorAll(s)},generateId(p='PHX'){return p+'-'+(Math.floor(Math.random()*900000)+100000)},isMobile(){return/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(window.innerWidth<=900&&'ontouchstart'in window)},isLandscape(){return window.matchMedia('(orientation: landscape)').matches||window.innerWidth>window.innerHeight},debounce(fn,w){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),w)}}};
+class SaveManager{constructor(){this.key='phoenix_save_v1';this.data=null}
+getDefault(){return{saveVersion:CONFIG.saveVersion,playerName:'Commander',playerId:Utils.generateId(),coins:500,diamonds:50,level:1,firstLaunch:true,lastOpenVersion:CONFIG.version,settings:{musicVolume:CONFIG.defaultVolumes.music*100,sfxVolume:CONFIG.defaultVolumes.sfx*100,graphics:CONFIG.defaultGraphics,fps:CONFIG.defaultFPS,language:CONFIG.defaultLanguage,sensitivity:CONFIG.defaultSensitivity,camDistance:CONFIG.defaultCamDistance},_meta:{created:Date.now(),updated:Date.now()}}}
+load(){try{const raw=localStorage.getItem(this.key);if(!raw){this.data=this.getDefault();this.save();return this.data}this.data=this._merge(this.getDefault(),JSON.parse(raw));this.data.lastOpenVersion=CONFIG.version;this.data._meta=this.data._meta||{};this.data._meta.updated=Date.now();this.save();return this.data}catch(e){Logger.error('Save load',e);this.data=this.getDefault();this.save();return this.data}}
+save(){try{if(!this.data)return;this.data._meta=this.data._meta||{};this.data._meta.updated=Date.now();localStorage.setItem(this.key,JSON.stringify(this.data))}catch(e){Logger.error('Save write',e)}}
+get(path,fb=null){if(!this.data)return fb;const p=path.split('.');let c=this.data;for(const k of p){if(c==null||typeof c!=='object')return fb;c=c[k]}return c!==undefined?c:fb}
+set(path,val){if(!this.data)this.load();const p=path.split('.');let c=this.data;for(let i=0;i<p.length-1;i++){if(c[p[i]]==null||typeof c[p[i]]!=='object')c[p[i]]={};c=c[p[i]]}c[p[p.length-1]]=val;this.save();Events.emit('save:updated',{path,val})}
+_merge(def,st){const r={...def};for(const k of Object.keys(st)){if(k==='settings'&&typeof st.settings==='object')r.settings={...def.settings,...st.settings};else if(st[k]!==undefined)r[k]=st[k]}return r}
+resetSettings(){if(!this.data)return;this.data.settings=this.getDefault().settings;this.save();Events.emit('settings:reset')}}
+class SettingsManager{constructor(s){this.save=s}get(k){return this.save.get('settings.'+k)}set(k,v){this.save.set('settings.'+k,v);Events.emit('settings:changed',{key:k,value:v})}reset(){this.save.resetSettings();Events.emit('settings:apply',this.save.get('settings'))}}
+class AudioManager{constructor(){this.enabled=true;this.muted=false;this.volumes={...CONFIG.defaultVolumes};this._ctx=null;this._init=false}
+init(){if(this._init)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(AC)this._ctx=new AC();this._init=true}catch(e){Logger.warn('Audio',e)}}
+setVolume(c,v){if(this.volumes[c]!==undefined)this.volumes[c]=Utils.clamp(v,0,1)}play(){}playUI(){this.play('ui','click')}resume(){if(this._ctx&&this._ctx.state==='suspended')this._ctx.resume().catch(()=>{})}}
+class NotificationSystem{constructor(){this.el=Utils.$('#toast-container')}
+show(msg,type='info',dur=2800){if(!this.el)return;const t=document.createElement('div');t.className='toast '+type;const icons={info:'ℹ',success:'✓',warning:'⚠',error:'✕'};t.innerHTML=`<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;this.el.appendChild(t);const rm=()=>{t.classList.add('out');setTimeout(()=>t.remove(),250)};setTimeout(rm,dur);t.addEventListener('click',rm)}
+info(m){this.show(m,'info')}success(m){this.show(m,'success')}warning(m){this.show(m,'warning')}error(m){this.show(m,'error')}}
+class PopupSystem{constructor(){this.overlay=Utils.$('#popup-overlay');this.title=Utils.$('#popup-title');this.msg=Utils.$('#popup-message');this.actions=Utils.$('#popup-actions');this._res=null}
+show({title='Notice',message='',buttons=[{label:'OK',value:true,primary:true}]}={}){return new Promise(resolve=>{this._res=resolve;this.title.textContent=title;this.msg.textContent=message;this.actions.innerHTML='';buttons.forEach(b=>{const btn=document.createElement('button');btn.className='btn btn-s'+(b.primary?' btn-p':'');btn.textContent=b.label;btn.addEventListener('click',()=>this._close(b.value));this.actions.appendChild(btn)});this.overlay.classList.add('active')})}
+_close(v){this.overlay.classList.remove('active');if(this._res){this._res(v);this._res=null}}
+confirm(t,m){return this.show({title:t,message:m,buttons:[{label:'Cancel',value:false},{label:'Confirm',value:true,primary:true}]})}
+alert(t,m){return this.show({title:t,message:m})}}
+class UIManager{constructor(){this.screens={splash:Utils.$('#splash-screen'),loading:Utils.$('#loading-screen'),menu:Utils.$('#main-menu'),settings:Utils.$('#settings-screen'),about:Utils.$('#about-screen'),game:Utils.$('#game-screen')};this.current='splash';this.notif=new NotificationSystem();this.popup=new PopupSystem();this.activePanel=null;this.trans=Utils.$('#trans')}
+showScreen(name){Object.keys(this.screens).forEach(k=>{if(k===name)this.screens[k].classList.add('active');else if(k!=='settings'&&k!=='about')this.screens[k].classList.remove('active')});this.current=name;Events.emit('ui:screen',name)}
+openPanel(name){if(name!=='settings'&&name!=='about')return;if(this.screens.menu)this.screens.menu.classList.add('dimmed');this.screens[name].classList.add('active');this.activePanel=name}
+closePanel(name){if(this.screens[name])this.screens[name].classList.remove('active');if(this.screens.menu)this.screens.menu.classList.remove('dimmed');this.activePanel=null}
+async transition(text,fn){if(this.trans){this.trans.querySelector('.trtx').textContent=text||'LOADING...';this.trans.classList.add('active')}await new Promise(r=>setTimeout(r,400));if(fn)await fn();await new Promise(r=>setTimeout(r,300));if(this.trans)this.trans.classList.remove('active')}
+updateProfile(d){const set=(id,v)=>{const e=Utils.$('#'+id);if(e)e.textContent=v};set('player-name',d.playerName||'Commander');set('player-id','ID: '+(d.playerId||'PHX-000000'));set('player-coins',(d.coins||0).toLocaleString());set('player-diamonds',(d.diamonds||0).toLocaleString());set('player-level',d.level||1);set('hud-player-name',d.playerName||'Commander');const av=Utils.$('#player-avatar');if(av)av.textContent=(d.playerName||'P').charAt(0).toUpperCase()}
+setVersionBadge(v){const e=Utils.$('#version-badge');if(e)e.textContent='v'+v}}
+class OrientationManager{constructor(){this.el=Utils.$('#orientation-lock');this._c=this._check.bind(this)}
+init(){this._check();window.addEventListener('resize',Utils.debounce(this._c,80));window.addEventListener('orientationchange',()=>setTimeout(this._c,100));try{const mq=window.matchMedia('(orientation: portrait)');if(mq.addEventListener)mq.addEventListener('change',this._c);else if(mq.addListener)mq.addListener(this._c)}catch(_){}}
+_check(){const portrait=!Utils.isLandscape();if(this.el)this.el.classList.toggle('active',portrait)}}
+class LoadingSystem{constructor(ui){this.ui=ui;this.bar=Utils.$('#loading-bar');this.pct=Utils.$('#loading-percent');this.tip=Utils.$('#loading-tip');this.tipIdx=0;this.tipTimer=null}
+start(){this._update(0);this.ui.showScreen('loading');this._tips();return this._progress()}
+_update(p){p=Utils.clamp(p,0,100);if(this.bar)this.bar.style.width=p+'%';if(this.pct)this.pct.textContent=Math.floor(p)+'%'}
+_tips(){const tips=CONFIG.loadingTips;const show=()=>{if(!this.tip)return;this.tip.style.opacity='0';setTimeout(()=>{this.tip.textContent=tips[this.tipIdx++%tips.length];this.tip.style.opacity='1'},280)};show();this.tipTimer=setInterval(show,2000)}
+_stopTips(){if(this.tipTimer){clearInterval(this.tipTimer);this.tipTimer=null}}
+_progress(){return new Promise(resolve=>{const start=performance.now(),dur=CONFIG.loadingMinDuration;const tick=now=>{const t=Utils.clamp((now-start)/dur,0,1);this._update((1-Math.pow(1-t,2.2))*100);if(t<1)requestAnimationFrame(tick);else{this._stopTips();setTimeout(resolve,180)}};requestAnimationFrame(tick)})}}
+class BackgroundParticles{constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.particles=[];this.running=false;this._raf=null;this.count=Utils.isMobile()?30:50}
+resize(){this.canvas.width=window.innerWidth;this.canvas.height=window.innerHeight}
+init(){this.resize();this.particles=[];for(let i=0;i<this.count;i++)this.particles.push({x:Math.random()*this.canvas.width,y:Math.random()*this.canvas.height,r:Math.random()*1.8+.3,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,a:Math.random()*.4+.08})}
+start(){if(this.running)return;this.running=true;this.init();const loop=()=>{if(!this.running)return;this._draw();this._raf=requestAnimationFrame(loop)};this._raf=requestAnimationFrame(loop);window.addEventListener('resize',Utils.debounce(()=>this.resize(),150))}
+stop(){this.running=false;if(this._raf)cancelAnimationFrame(this._raf)}
+_draw(){const{ctx,canvas,particles}=this;ctx.clearRect(0,0,canvas.width,canvas.height);const t=performance.now()*.00012;for(let i=0;i<3;i++){const ox=canvas.width*(.25+.25*i)+Math.sin(t+i)*50,oy=canvas.height*.4+Math.cos(t*.7+i)*30;const g=ctx.createRadialGradient(ox,oy,0,ox,oy,90);g.addColorStop(0,`rgba(0,160,255,${.05-i*.01})`);g.addColorStop(1,'rgba(0,160,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(ox,oy,100,0,Math.PI*2);ctx.fill()}for(const p of particles){p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,180,255,${p.a})`;ctx.fill()}}}
+
+class GameWorld{
+constructor(){this.engine=null;this.scene=null;this.canvas=null;this.player=null;this.camera=null;this.running=false;this.paused=false;this._keys={};this._moveInput={x:0,y:0};this._lookInput={x:0,y:0};this._sprint=false;this._crouch=false;this._jump=false;this._velY=0;this._grounded=true;this._yaw=0;this._pitch=.25;this._camDist=CONFIG.defaultCamDistance;this._playerMesh=null;this._fps=60;this._lastFpsUpdate=0;this._sensitivity=.5}
+async init(canvas,settings){this.canvas=canvas;this._camDist=settings.camDistance||CONFIG.defaultCamDistance;this._sensitivity=(settings.sensitivity||50)/100;
+this.engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:false,adaptToDeviceRatio:true});
+this.engine.setHardwareScalingLevel(settings.graphics==='low'?1.25:settings.graphics==='high'?.85:1);
+this.scene=new BABYLON.Scene(this.engine);this.scene.clearColor=new BABYLON.Color4(.02,.04,.08,1);this.scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;this.scene.fogDensity=.008;this.scene.fogColor=new BABYLON.Color3(.15,.22,.32);
+const hemi=new BABYLON.HemisphericLight('hemi',new BABYLON.Vector3(.2,1,.3),this.scene);hemi.intensity=.55;hemi.groundColor=new BABYLON.Color3(.08,.1,.15);
+const sun=new BABYLON.DirectionalLight('sun',new BABYLON.Vector3(-.5,-1,.3),this.scene);sun.position=new BABYLON.Vector3(40,60,-30);sun.intensity=1.1;
+const shadowGen=new BABYLON.ShadowGenerator(1024,sun);shadowGen.useBlurExponentialShadowMap=true;shadowGen.blurKernel=16;shadowGen.setDarkness(.35);
+this._buildWorld(shadowGen);this._createPlayer(shadowGen);this._createCamera();this._bindInput();
+try{const pipeline=new BABYLON.DefaultRenderingPipeline('default',true,this.scene,[this.camera]);pipeline.bloomEnabled=settings.graphics!=='low';pipeline.bloomThreshold=.8;pipeline.bloomWeight=.3;pipeline.bloomKernel=32;pipeline.fxaaEnabled=settings.graphics==='high'}catch(_){}
+window.addEventListener('resize',()=>{if(this.engine)this.engine.resize()});Events.emit('scene:loaded');return true}
+_buildWorld(sg){const sc=this.scene;
+const ground=BABYLON.MeshBuilder.CreateGround('ground',{width:120,height:120,subdivisions:32},sc);const gMat=new BABYLON.StandardMaterial('gMat',sc);gMat.diffuseColor=new BABYLON.Color3(.12,.18,.14);gMat.specularColor=new BABYLON.Color3(.05,.05,.05);ground.material=gMat;ground.receiveShadows=true;
+const platform=BABYLON.MeshBuilder.CreateCylinder('plat',{diameter:12,height:.4,tessellation:24},sc);platform.position.y=.2;const pMat=new BABYLON.StandardMaterial('pMat',sc);pMat.diffuseColor=new BABYLON.Color3(.15,.2,.28);pMat.emissiveColor=new BABYLON.Color3(.02,.05,.1);platform.material=pMat;platform.receiveShadows=true;sg.addShadowCaster(platform);
+const road=BABYLON.MeshBuilder.CreateBox('road',{width:6,height:.08,depth:50},sc);road.position.set(0,.05,25);const rMat=new BABYLON.StandardMaterial('rMat',sc);rMat.diffuseColor=new BABYLON.Color3(.18,.18,.2);road.material=rMat;
+for(let i=0;i<8;i++){const h=BABYLON.MeshBuilder.CreateSphere('hill'+i,{diameterX:8+Math.random()*10,diameterY:3+Math.random()*4,diameterZ:8+Math.random()*10,segments:8},sc);const ang=(i/8)*Math.PI*2;h.position.set(Math.cos(ang)*45,-1,Math.sin(ang)*45);const hm=new BABYLON.StandardMaterial('hm'+i,sc);hm.diffuseColor=new BABYLON.Color3(.1+Math.random()*.05,.16,.12);h.material=hm;h.receiveShadows=true}
+for(let i=0;i<12;i++){const rock=BABYLON.MeshBuilder.CreatePolyhedron('rock'+i,{type:1,size:.4+Math.random()*.8},sc);rock.position.set((Math.random()-.5)*80,.3,(Math.random()-.5)*80);rock.rotation.y=Math.random()*Math.PI;const rm=new BABYLON.StandardMaterial('rm'+i,sc);rm.diffuseColor=new BABYLON.Color3(.25,.25,.28);rock.material=rm;sg.addShadowCaster(rock)}
+for(let i=0;i<20;i++){const trunk=BABYLON.MeshBuilder.CreateCylinder('tr'+i,{diameter:.3,height:2.5,tessellation:6},sc);const canopy=BABYLON.MeshBuilder.CreateSphere('can'+i,{diameter:2.2,segments:6},sc);const x=(Math.random()-.5)*90,z=(Math.random()-.5)*90;if(Math.abs(x)<10&&Math.abs(z)<10)continue;trunk.position.set(x,1.25,z);canopy.position.set(x,3.2,z);const tm=new BABYLON.StandardMaterial('tm'+i,sc);tm.diffuseColor=new BABYLON.Color3(.3,.2,.12);trunk.material=tm;const cm=new BABYLON.StandardMaterial('cm'+i,sc);cm.diffuseColor=new BABYLON.Color3(.08,.28,.12);canopy.material=cm;sg.addShadowCaster(trunk);sg.addShadowCaster(canopy)}
+for(let i=0;i<6;i++){const box=BABYLON.MeshBuilder.CreateBox('box'+i,{size:1.2},sc);box.position.set(8+i*2.5,.6,6);const bm=new BABYLON.StandardMaterial('bm'+i,sc);bm.diffuseColor=new BABYLON.Color3(.2,.25,.35);bm.emissiveColor=new BABYLON.Color3(.01,.03,.06);box.material=bm;sg.addShadowCaster(box)}
+for(let i=0;i<3;i++){const b=BABYLON.MeshBuilder.CreateBox('bld'+i,{width:5,height:4+i,depth:5},sc);b.position.set(-20-i*8,(4+i)/2,15);const bm=new BABYLON.StandardMaterial('bldm'+i,sc);bm.diffuseColor=new BABYLON.Color3(.18,.22,.3);bm.emissiveColor=new BABYLON.Color3(.02,.04,.08);b.material=bm;sg.addShadowCaster(b)}
+for(let i=0;i<10;i++){const m=BABYLON.MeshBuilder.CreateCylinder('mtn'+i,{diameterTop:2,diameterBottom:18+Math.random()*12,height:20+Math.random()*15,tessellation:8},sc);const ang=(i/10)*Math.PI*2;m.position.set(Math.cos(ang)*70,8,Math.sin(ang)*70);const mm=new BABYLON.StandardMaterial('mm'+i,sc);mm.diffuseColor=new BABYLON.Color3(.1,.12,.16);m.material=mm}
+const sky=BABYLON.MeshBuilder.CreateSphere('sky',{diameter:200,segments:16},sc);const skyMat=new BABYLON.StandardMaterial('skyMat',sc);skyMat.emissiveColor=new BABYLON.Color3(.08,.14,.25);skyMat.diffuseColor=new BABYLON.Color3(0,0,0);skyMat.backFaceCulling=false;sky.material=skyMat;sky.isPickable=false}
+_createPlayer(sg){const sc=this.scene;const body=BABYLON.MeshBuilder.CreateBox('pBody',{width:.5,height:.7,depth:.35},sc);const head=BABYLON.MeshBuilder.CreateSphere('pHead',{diameter:.35,segments:8},sc);head.position.y=.55;const legL=BABYLON.MeshBuilder.CreateBox('pLegL',{width:.18,height:.55,depth:.2},sc);legL.position.set(-.12,-.6,0);const legR=BABYLON.MeshBuilder.CreateBox('pLegR',{width:.18,height:.55,depth:.2},sc);legR.position.set(.12,-.6,0);const root=new BABYLON.TransformNode('playerRoot',sc);body.parent=root;head.parent=root;legL.parent=root;legR.parent=root;root.position.set(0,CONFIG.player.height/2,0);const mat=new BABYLON.StandardMaterial('pMat',sc);mat.diffuseColor=new BABYLON.Color3(.15,.35,.55);mat.emissiveColor=new BABYLON.Color3(.02,.08,.15);body.material=mat;head.material=mat;legL.material=mat;legR.material=mat;sg.addShadowCaster(body);sg.addShadowCaster(head);this._playerMesh=root;this.player={root,body,pos:root.position,yaw:0,state:'idle',crouching:false};Events.emit('player:spawned')}
+_createCamera(){this.camera=new BABYLON.UniversalCamera('cam',new BABYLON.Vector3(0,3,-6),this.scene);this.camera.minZ=.3;this.camera.maxZ=200;this.camera.fov=.9;this.scene.activeCamera=this.camera}
+_bindInput(){window.addEventListener('keydown',e=>{this._keys[e.code]=true;if(e.code==='Escape')Events.emit('game:pause-toggle');if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault()});window.addEventListener('keyup',e=>{this._keys[e.code]=false});this.canvas.addEventListener('click',()=>{if(!Utils.isMobile()&&!this.paused)this.canvas.requestPointerLock?.()});document.addEventListener('mousemove',e=>{if(document.pointerLockElement!==this.canvas||this.paused)return;const sens=this._sensitivity*.003;this._yaw-=e.movementX*sens;this._pitch=Utils.clamp(this._pitch-e.movementY*sens,-.6,.8)})}
+setMobileInput(move,look,sprint,jump,crouch){this._moveInput=move;this._lookInput=look;this._sprint=sprint;if(jump)this._jump=true;this._crouch=crouch}
+start(){if(this.running)return;this.running=true;this.paused=false;this.engine.runRenderLoop(()=>this._tick())}
+pause(){this.paused=true;document.exitPointerLock?.()}resume(){this.paused=false}
+stop(){this.running=false;if(this.engine)this.engine.stopRenderLoop()}
+dispose(){this.stop();try{if(this.scene)this.scene.dispose();if(this.engine)this.engine.dispose()}catch(_){}this.scene=null;this.engine=null;this._playerMesh=null}
+_tick(){if(!this.scene||!this.engine)return;const dt=Math.min(this.engine.getDeltaTime()/1000,.05);if(!this.paused)this._updatePlayer(dt);this._updateCamera(dt);this.scene.render();const now=performance.now();if(now-this._lastFpsUpdate>400){this._fps=Math.round(this.engine.getFps());this._lastFpsUpdate=now;Events.emit('game:fps',this._fps)}}
+_updatePlayer(dt){const p=CONFIG.player;let ix=0,iz=0;if(this._keys['KeyW']||this._keys['ArrowUp'])iz+=1;if(this._keys['KeyS']||this._keys['ArrowDown'])iz-=1;if(this._keys['KeyA']||this._keys['ArrowLeft'])ix-=1;if(this._keys['KeyD']||this._keys['ArrowRight'])ix+=1;ix+=this._moveInput.x;iz+=this._moveInput.y;if(Math.abs(this._lookInput.x)>.05||Math.abs(this._lookInput.y)>.05){const sens=this._sensitivity*2.5*dt;this._yaw-=this._lookInput.x*sens;this._pitch=Utils.clamp(this._pitch-this._lookInput.y*sens,-.6,.8)}const len=Math.hypot(ix,iz);if(len>1){ix/=len;iz/=len}const sprinting=this._sprint||this._keys['ShiftLeft']||this._keys['ShiftRight'];const crouching=this._crouch||this._keys['ControlLeft']||this._keys['ControlRight'];this.player.crouching=crouching;let speed=p.walkSpeed;if(crouching)speed=p.crouchSpeed;else if(sprinting&&len>.1)speed=p.sprintSpeed;else if(len>.1)speed=p.runSpeed;const sin=Math.sin(this._yaw),cos=Math.cos(this._yaw);const mx=(ix*cos+iz*sin)*speed,mz=(-ix*sin+iz*cos)*speed;const pos=this.player.root.position;pos.x+=mx*dt;pos.z+=mz*dt;pos.x=Utils.clamp(pos.x,-55,55);pos.z=Utils.clamp(pos.z,-55,55);const jumpPressed=this._jump||this._keys['Space'];if(jumpPressed&&this._grounded){this._velY=p.jumpForce;this._grounded=false;this._jump=false}this._velY-=p.gravity*dt;pos.y+=this._velY*dt;const groundY=crouching?p.height*.35:p.height*.5;if(pos.y<=groundY){pos.y=groundY;this._velY=0;this._grounded=true}if(len>.1){const targetYaw=Math.atan2(mx,mz);this.player.yaw=Utils.lerp(this.player.yaw,targetYaw,1-Math.exp(-10*dt));this.player.root.rotation.y=this.player.yaw}const targetScaleY=crouching?.7:1;this.player.root.scaling.y=Utils.lerp(this.player.root.scaling.y,targetScaleY,1-Math.exp(-12*dt))}
+_updateCamera(dt){if(!this.player||!this.camera)return;const pos=this.player.root.position;const dist=this._camDist;const height=CONFIG.camera.height+(this.player.crouching?-0.3:0);const tx=pos.x+Math.sin(this._yaw)*dist,tz=pos.z+Math.cos(this._yaw)*dist,ty=pos.y+height+Math.sin(this._pitch)*dist*.5;const lag=1-Math.exp(-dt/CONFIG.camera.lag);this.camera.position.x=Utils.lerp(this.camera.position.x,tx,lag);this.camera.position.y=Utils.lerp(this.camera.position.y,ty,lag);this.camera.position.z=Utils.lerp(this.camera.position.z,tz,lag);this.camera.setTarget(new BABYLON.Vector3(pos.x,pos.y+height*.6,pos.z))}
+getPlayerPos(){if(!this.player)return{x:0,y:0,z:0};const p=this.player.root.position;return{x:p.x.toFixed(1),y:p.y.toFixed(1),z:p.z.toFixed(1)}}
+setCamDistance(d){this._camDist=Utils.clamp(d,CONFIG.camera.minDist,CONFIG.camera.maxDist)}setSensitivity(s){this._sensitivity=Utils.clamp(s/100,.1,1)}}
+class VirtualJoystick{constructor(zoneEl,knobEl){this.zone=zoneEl;this.knob=knobEl;this.active=false;this.id=null;this.value={x:0,y:0};this._cx=0;this._cy=0;this._max=40;this._bind()}
+_bind(){const start=e=>{const t=e.changedTouches?e.changedTouches[0]:e;if(this.active)return;this.active=true;this.id=t.identifier??'mouse';const rect=this.zone.getBoundingClientRect();this._cx=rect.left+rect.width/2;this._cy=rect.top+rect.height/2;this._move(t.clientX,t.clientY);e.preventDefault()};const move=e=>{if(!this.active)return;const touches=e.changedTouches||[e];for(const t of touches){if((t.identifier??'mouse')===this.id){this._move(t.clientX,t.clientY);e.preventDefault();break}}};const end=e=>{if(!this.active)return;const touches=e.changedTouches||[e];for(const t of touches){if((t.identifier??'mouse')===this.id){this.active=false;this.id=null;this.value={x:0,y:0};this.knob.style.transform='translate(-50%,-50%)';e.preventDefault();break}}};this.zone.addEventListener('touchstart',start,{passive:false});this.zone.addEventListener('touchmove',move,{passive:false});this.zone.addEventListener('touchend',end,{passive:false});this.zone.addEventListener('touchcancel',end,{passive:false})}
+_move(x,y){let dx=x-this._cx,dy=y-this._cy;const dist=Math.hypot(dx,dy);if(dist>this._max){dx=dx/dist*this._max;dy=dy/dist*this._max}this.value={x:dx/this._max,y:-dy/this._max};this.knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`}}
+
+class GameManager{
+constructor(){this.save=new SaveManager();this.settings=new SettingsManager(this.save);this.audio=new AudioManager();this.ui=new UIManager();this.loading=new LoadingSystem(this.ui);this.orientation=new OrientationManager();this.bg=null;this.world=null;this.state='boot';this.ready=false;this._joyMove=null;this._joyLook=null;this._sprintHeld=false;this._crouchHeld=false;this._mobileLoop=null}
+async init(){try{Logger.info('Init Phoenix v'+CONFIG.version);this.save.load();this.audio.init();this.orientation.init();this._bindUI();this._applySettingsToUI();this.ui.updateProfile(this.save.data);this.ui.setVersionBadge(CONFIG.version);this._lockGestures();const canvas=Utils.$('#bg-canvas');if(canvas){this.bg=new BackgroundParticles(canvas);this.bg.start()}if(CONFIG.debug)Utils.$('#debug-panel')?.classList.add('active');await this._runSplash();await this.loading.start();this.ui.showScreen('menu');this.state='menu';this.ready=true;if(this.save.get('firstLaunch')){this.save.set('firstLaunch',false);this.ui.notif.info('Welcome to Project Phoenix!')}let last=performance.now(),frames=0;const fpsLoop=now=>{frames++;if(now-last>=1000){const el=Utils.$('#fps-display');if(el&&this.state==='menu')el.textContent=frames+' FPS';frames=0;last=now}requestAnimationFrame(fpsLoop)};requestAnimationFrame(fpsLoop);Events.emit('game:ready')}catch(e){Logger.error('Init failed',e);try{this.ui.showScreen('menu')}catch(_){}}}
+_lockGestures(){document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});document.addEventListener('contextmenu',e=>e.preventDefault());let lastTouch=0;document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTouch<=300)e.preventDefault();lastTouch=now},{passive:false})}
+_runSplash(){return new Promise(r=>setTimeout(()=>{this.ui.showScreen('loading');r()},CONFIG.splashDuration))}
+_bindUI(){Utils.$('#btn-start')?.addEventListener('click',()=>this._startGame());
+Utils.$('#btn-settings')?.addEventListener('click',()=>{this.audio.playUI();this._applySettingsToUI();this.ui.openPanel('settings')});
+Utils.$('#btn-about')?.addEventListener('click',()=>{this.audio.playUI();this.ui.openPanel('about')});
+Utils.$('#settings-close')?.addEventListener('click',()=>{this.audio.playUI();this.ui.closePanel('settings')});
+Utils.$('#btn-settings-done')?.addEventListener('click',()=>{this.audio.playUI();this.ui.closePanel('settings')});
+Utils.$('#about-close')?.addEventListener('click',()=>{this.audio.playUI();this.ui.closePanel('about')});
+['settings-screen','about-screen'].forEach(id=>{Utils.$('#'+id)?.addEventListener('click',e=>{if(e.target.id===id){this.audio.playUI();this.ui.closePanel(id.replace('-screen',''))}})});
+Utils.$$('.snb').forEach(btn=>{btn.addEventListener('click',()=>{Utils.$$('.snb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');Utils.$$('.spane').forEach(p=>p.classList.remove('active'));Utils.$('#pane-'+btn.dataset.pane)?.classList.add('active')})});
+const bindSlider=(id,key,labelId,suf='%',extra)=>{const el=Utils.$('#'+id);if(!el)return;el.addEventListener('input',e=>{const v=+e.target.value;if(labelId)Utils.$('#'+labelId).textContent=v+suf;this.settings.set(key,v);if(extra)extra(v)})};
+bindSlider('slider-music','musicVolume','music-vol-val','%',v=>this.audio.setVolume('music',v/100));
+bindSlider('slider-sfx','sfxVolume','sfx-vol-val','%',v=>this.audio.setVolume('sfx',v/100));
+bindSlider('slider-sensitivity','sensitivity','sens-val','%',v=>{if(this.world)this.world.setSensitivity(v)});
+bindSlider('slider-camdist','camDistance','cam-dist-val','',v=>{if(this.world)this.world.setCamDistance(v)});
+this._bindSelect('graphics-select','graphics');this._bindSelect('fps-select','fps',v=>parseInt(v,10));this._bindSelect('lang-select','language');
+Utils.$('#btn-reset-settings')?.addEventListener('click',async()=>{this.audio.playUI();if(await this.ui.popup.confirm('Reset Settings','Restore all settings to defaults?')){this.settings.reset();this._applySettingsToUI();this.ui.notif.success('Settings reset')}});
+Utils.$('#btn-notif')?.addEventListener('click',()=>{this.ui.notif.info('Training Grounds are open. Press START GAME to explore.')});
+Utils.$('#btn-pause')?.addEventListener('click',()=>this._togglePause());
+Utils.$('#btn-resume')?.addEventListener('click',()=>this._togglePause());
+Utils.$('#btn-return-lobby')?.addEventListener('click',()=>this._returnToLobby());
+Utils.$('#btn-pause-settings')?.addEventListener('click',()=>{this.ui.openPanel('settings')});
+Events.on('game:pause-toggle',()=>{if(this.state==='game')this._togglePause()});
+Events.on('game:fps',fps=>{const el=Utils.$('#hud-fps');if(el)el.textContent=fps+' FPS';if(CONFIG.debug)this._updateDebug(fps)});
+const hold=(id,on,off)=>{const el=Utils.$('#'+id);if(!el)return;const down=e=>{e.preventDefault();on();el.classList.add('active')};const up=e=>{e.preventDefault();off();el.classList.remove('active')};el.addEventListener('touchstart',down,{passive:false});el.addEventListener('touchend',up,{passive:false});el.addEventListener('mousedown',down);el.addEventListener('mouseup',up);el.addEventListener('mouseleave',up)};
+hold('btn-sprint',()=>{this._sprintHeld=true},()=>{this._sprintHeld=false});
+hold('btn-crouch',()=>{this._crouchHeld=true},()=>{this._crouchHeld=false});
+Utils.$('#btn-jump')?.addEventListener('touchstart',e=>{e.preventDefault();if(this.world)this.world._jump=true},{passive:false});
+Utils.$('#btn-jump')?.addEventListener('mousedown',()=>{if(this.world)this.world._jump=true});
+document.addEventListener('pointerdown',()=>this.audio.resume(),{once:true})}
+_bindSelect(id,key,transform=v=>v){const group=Utils.$('#'+id);if(!group)return;group.querySelectorAll('.sopt').forEach(opt=>{opt.addEventListener('click',()=>{group.querySelectorAll('.sopt').forEach(o=>o.classList.remove('active'));opt.classList.add('active');this.settings.set(key,transform(opt.dataset.value));this.audio.playUI()})})}
+_applySettingsToUI(){const s=this.save.get('settings')||{};const setSlider=(id,val,label,suf='%')=>{const el=Utils.$('#'+id);if(el)el.value=val;const lb=Utils.$('#'+label);if(lb)lb.textContent=val+suf};setSlider('slider-music',s.musicVolume??70,'music-vol-val');setSlider('slider-sfx',s.sfxVolume??80,'sfx-vol-val');setSlider('slider-sensitivity',s.sensitivity??50,'sens-val');setSlider('slider-camdist',s.camDistance??5,'cam-dist-val','');this.audio.setVolume('music',(s.musicVolume??70)/100);this.audio.setVolume('sfx',(s.sfxVolume??80)/100);this._setActive('graphics-select',s.graphics||'medium');this._setActive('fps-select',String(s.fps||60));this._setActive('lang-select',s.language||'en')}
+_setActive(gid,val){const g=Utils.$('#'+gid);if(!g)return;g.querySelectorAll('.sopt').forEach(o=>o.classList.toggle('active',o.dataset.value===String(val)))}
+async _startGame(){this.audio.playUI();this.state='loading-game';await this.ui.transition('ENTERING TRAINING GROUNDS...',async()=>{if(this.bg)this.bg.stop();this.ui.showScreen('game');const canvas=Utils.$('#game-canvas');const s=this.save.get('settings')||{};this.world=new GameWorld();await this.world.init(canvas,s);this.world.start();if(Utils.isMobile()){Utils.$('#mobile-controls')?.classList.add('show');this._joyMove=new VirtualJoystick(Utils.$('#joy-move'),Utils.$('#joy-move-knob'));this._joyLook=new VirtualJoystick(Utils.$('#joy-look'),Utils.$('#joy-look-knob'));this._mobileLoop=setInterval(()=>{if(!this.world||this.world.paused)return;this.world.setMobileInput(this._joyMove?.value||{x:0,y:0},this._joyLook?.value||{x:0,y:0},this._sprintHeld,false,this._crouchHeld)},16)}});this.state='game';this.ui.notif.info('Training Grounds · WASD / Joysticks to move');Events.emit('match:started')}
+_togglePause(){if(this.state!=='game'||!this.world)return;const overlay=Utils.$('#pause-overlay');if(this.world.paused){this.world.resume();overlay?.classList.remove('active')}else{this.world.pause();overlay?.classList.add('active')}Events.emit('game:pause',this.world.paused)}
+async _returnToLobby(){Utils.$('#pause-overlay')?.classList.remove('active');await this.ui.transition('RETURNING TO LOBBY...',async()=>{if(this._mobileLoop){clearInterval(this._mobileLoop);this._mobileLoop=null}Utils.$('#mobile-controls')?.classList.remove('show');if(this.world){this.world.dispose();this.world=null}this.ui.showScreen('menu');if(this.bg)this.bg.start()});this.state='menu';Events.emit('match:ended')}
+_updateDebug(fps){const panel=Utils.$('#debug-panel');if(!panel)return;const pos=this.world?this.world.getPlayerPos():{x:0,y:0,z:0};panel.innerHTML=`FPS: ${fps}<br>State: ${this.state}<br>Pos: ${pos.x}, ${pos.y}, ${pos.z}<br>v${CONFIG.version}`}}
+(function boot(){const game=new GameManager();window.Phoenix=game;if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>game.init());else game.init()})();
+</script>
+</body>
+</html>
