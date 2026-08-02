@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#050508">
+    <title>PROJECT PHOENIX – Battle Royale</title>
+    <style>
+/* ==========================================================================
+   PROJECT PHOENIX – VERSION 1.0
+   Premium CSS – Futuristic Dark Theme + Glassmorphism
+   ========================================================================== */
+
+:root {
+    /* Colors */
+    --bg-primary: #050508;
+    --bg-secondary: #0d0f14;
+    --bg-tertiary: #151820;
+    --accent: #00b4ff;
+    --accent-secondary: #00e5ff;
+    --accent-glow: rgba(0, 180, 255, 0.45);
+    --success: #00e676;
+    --warning: #ffab00;
+    --danger: #ff3d57;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a8b8;
+    --text-muted: #6b7385;
+    --glass-bg: rgba(18, 22, 32, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.04);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    --shadow-glow: 0 0 24px var(--accent-glow);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+    --anim-fast: 0.18s;
+    --anim-normal: 0.32s;
+    --anim-slow: 0.55s;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --font-main: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-main);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+body {
+    position: relative;
+}
+
+/* ===================== UTILITY ===================== */
+.hidden { display: none !important; }
+.invisible { opacity: 0; pointer-events: none; }
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===================== SCREENS ===================== */
+.screen {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--anim-slow) ease;
+    z-index: 10;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+}
+
+.screen.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 20;
+}
+
+/* ===================== ANIMATED BACKGROUND ===================== */
+#bg-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    background: radial-gradient(ellipse at 30% 20%, #0a1628 0%, #050508 50%, #020204 100%);
+}
+
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 70% 80%, rgba(0, 180, 255, 0.06) 0%, transparent 45%),
+        radial-gradient(circle at 20% 60%, rgba(0, 229, 255, 0.04) 0%, transparent 40%);
+}
+
+/* ===================== SPLASH SCREEN ===================== */
+#splash-screen {
+    z-index: 100;
+    background: var(--bg-primary);
+    justify-content: center;
+    align-items: center;
+}
+
+.splash-content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+.splash-logo {
+    font-size: clamp(2.4rem, 8vw, 4.2rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent-secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 40px var(--accent-glow);
+    animation: logoGlow 2.4s ease-in-out infinite alternate;
+    margin-bottom: var(--spacing-sm);
+}
+
+.splash-subtitle {
+    font-size: clamp(0.95rem, 3vw, 1.25rem);
+    color: var(--text-secondary);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    animation: fadeInUp 1s ease 0.4s both;
+}
+
+.splash-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 1;
+}
+
+@keyframes logoGlow {
+    0% { filter: drop-shadow(0 0 12px rgba(0,180,255,0.3)); }
+    100% { filter: drop-shadow(0 0 28px rgba(0,180,255,0.7)); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================== LOADING SCREEN ===================== */
+#loading-screen {
+    z-index: 90;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-primary);
+}
+
+.loading-container {
+    width: min(90%, 420px);
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+.loading-spinner {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--spacing-lg);
+    border: 3px solid rgba(0,180,255,0.15);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.loading-bar-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.loading-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 99px;
+    transition: width 0.25s ease;
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.loading-percent {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.loading-tip {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    min-height: 2.4em;
+    line-height: 1.4;
+    padding: 0 var(--spacing-md);
+    transition: opacity 0.4s ease;
+}
+
+/* ===================== MAIN MENU ===================== */
+#main-menu {
+    z-index: 30;
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.menu-inner {
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    min-height: 100%;
+    justify-content: space-between;
+}
+
+/* Profile Card */
+.profile-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    box-shadow: var(--shadow);
+    animation: slideDown 0.5s ease both;
+}
+
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0055aa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px var(--accent-glow);
+    border: 2px solid rgba(255,255,255,0.15);
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.player-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-id {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.06);
+    padding: 3px 8px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.stat-pill .icon { font-size: 0.8rem; }
+.stat-pill.coins .icon { color: #ffd54f; }
+.stat-pill.diamonds .icon { color: var(--accent-secondary); }
+.stat-pill.level .icon { color: var(--success); }
+
+/* Logo area */
+.menu-logo-area {
+    text-align: center;
+    padding: var(--spacing-md) 0;
+    animation: fadeInUp 0.6s ease 0.15s both;
+}
+
+.menu-logo {
+    font-size: clamp(1.8rem, 7vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #fff, var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.menu-tagline {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+/* Buttons */
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    animation: fadeInUp 0.55s ease 0.25s both;
+}
+
+.btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform var(--anim-fast) ease, box-shadow var(--anim-fast) ease, background var(--anim-fast) ease;
+    color: var(--text-primary);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+    min-height: 52px;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.25) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.btn:active::after {
+    opacity: 1;
+    transition: opacity 0s;
+}
+
+.btn:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: var(--shadow), 0 0 20px rgba(0,180,255,0.2);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0088cc, var(--accent));
+    border: 1px solid rgba(0,180,255,0.4);
+    box-shadow: 0 4px 20px rgba(0,180,255,0.35);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 28px rgba(0,180,255,0.5);
+}
+
+.btn-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    filter: grayscale(0.4);
+}
+
+.btn-icon {
+    font-size: 1.15rem;
+}
+
+.menu-secondary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+}
+
+.menu-footer {
+    text-align: center;
+    padding: var(--spacing-md) 0 var(--spacing-sm);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    animation: fadeInUp 0.5s ease 0.4s both;
+}
+
+.version-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 10px;
+    border-radius: 99px;
+    margin-bottom: 6px;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+}
+
+/* ===================== SETTINGS & ABOUT PANELS ===================== */
+.panel-screen {
+    justify-content: flex-end;
+    align-items: center;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.panel {
+    width: 100%;
+    max-width: 440px;
+    max-height: 88vh;
+    background: var(--glass-bg);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform var(--anim-slow) cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+}
+
+.panel-screen.active .panel {
+    transform: translateY(0);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.panel-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--anim-fast);
+}
+
+.panel-close:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--text-primary);
+}
+
+.panel-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Settings controls */
+.setting-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.setting-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.setting-value {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+    outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--accent-glow);
+    border: 2px solid #fff;
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--accent-glow);
+    border: 2px solid #fff;
+}
+
+.select-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.select-option {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--anim-fast);
+}
+
+.select-option.active {
+    background: rgba(0,180,255,0.18);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.panel-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.btn-sm {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+}
+
+.btn-danger {
+    background: rgba(255,61,87,0.15);
+    border-color: rgba(255,61,87,0.35);
+    color: var(--danger);
+}
+
+.btn-danger:hover {
+    background: rgba(255,61,87,0.25);
+}
+
+/* About content */
+.about-content h3 {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+    color: var(--accent);
+}
+
+.about-content p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: var(--spacing-md);
+}
+
+.about-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--glass-border);
+}
+
+/* ===================== POPUP SYSTEM ===================== */
+#popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--anim-normal);
+    padding: var(--spacing-md);
+}
+
+#popup-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.popup {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    max-width: 340px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    transform: scale(0.9);
+    transition: transform var(--anim-normal) cubic-bezier(0.22,1,0.36,1);
+    text-align: center;
+}
+
+#popup-overlay.active .popup {
+    transform: scale(1);
+}
+
+.popup-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.popup-message {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin-bottom: var(--spacing-lg);
+}
+
+.popup-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* ===================== TOAST NOTIFICATIONS ===================== */
+#toast-container {
+    position: fixed;
+    top: calc(var(--safe-top) + 16px);
+    right: 16px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    max-width: min(340px, calc(100vw - 32px));
+}
+
+@media (max-width: 600px) {
+    #toast-container {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        align-items: center;
+    }
+}
+
+.toast {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastIn 0.35s ease both;
+    pointer-events: auto;
+}
+
+.toast.out {
+    animation: toastOut 0.3s ease both;
+}
+
+.toast-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.warning { border-left: 3px solid var(--warning); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--accent); }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-12px); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================== EXIT BUTTON (desktop) ===================== */
+.btn-exit {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .btn-exit {
+        display: flex;
+    }
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 380px) {
+    .profile-card { padding: 12px; }
+    .avatar { width: 48px; height: 48px; font-size: 1.2rem; }
+    .btn { padding: 14px 16px; font-size: 0.95rem; }
+}
+
+@media (min-width: 768px) {
+    .menu-inner { max-width: 420px; }
+    .panel { border-radius: var(--radius-xl); margin-bottom: 5vh; }
+}
+    </style>
+</head>
+<body>
+
+<!-- Animated background canvas -->
+<canvas id="bg-canvas"></canvas>
+<div class="bg-overlay"></div>
+
+<!-- ===================== SPLASH SCREEN ===================== -->
+<div id="splash-screen" class="screen active">
+    <div class="splash-particles" id="splash-particles"></div>
+    <div class="splash-content">
+        <div class="splash-logo">PROJECT PHOENIX</div>
+        <div class="splash-subtitle">Battle Royale</div>
+    </div>
+</div>
+
+<!-- ===================== LOADING SCREEN ===================== -->
+<div id="loading-screen" class="screen">
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-title">LOADING</div>
+        <div class="loading-bar-track">
+            <div class="loading-bar-fill" id="loading-bar"></div>
+        </div>
+        <div class="loading-percent" id="loading-percent">0%</div>
+        <div class="loading-tip" id="loading-tip">Preparing the battlefield...</div>
+    </div>
+</div>
+
+<!-- ===================== MAIN MENU ===================== -->
+<div id="main-menu" class="screen">
+    <div class="menu-inner">
+        <div>
+            <!-- Profile Card -->
+            <div class="profile-card" id="profile-card">
+                <div class="avatar" id="player-avatar">P</div>
+                <div class="profile-info">
+                    <div class="player-name" id="player-name">Commander</div>
+                    <div class="player-id" id="player-id">ID: PHX-000000</div>
+                    <div class="profile-stats">
+                        <div class="stat-pill coins"><span class="icon">●</span> <span id="player-coins">0</span></div>
+                        <div class="stat-pill diamonds"><span class="icon">◆</span> <span id="player-diamonds">0</span></div>
+                        <div class="stat-pill level"><span class="icon">★</span> Lv.<span id="player-level">1</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="menu-logo-area">
+                <div class="menu-logo">PROJECT PHOENIX</div>
+                <div class="menu-tagline">Battle Royale</div>
+            </div>
+
+            <!-- Main Buttons -->
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="btn-start" data-sound="click">
+                    <span class="btn-icon">▶</span> START GAME
+                </button>
+
+                <div class="menu-secondary-row">
+                    <button class="btn" id="btn-settings" data-sound="click">
+                        <span class="btn-icon">⚙</span> Settings
+                    </button>
+                    <button class="btn" id="btn-about" data-sound="click">
+                        <span class="btn-icon">ℹ</span> About
+                    </button>
+                </div>
+
+                <div class="menu-secondary-row">
+                    <button class="btn btn-disabled" id="btn-store" disabled>
+                        <span class="btn-icon">🛒</span> Store
+                    </button>
+                    <button class="btn btn-disabled" id="btn-inventory" disabled>
+                        <span class="btn-icon">🎒</span> Inventory
+                    </button>
+                </div>
+
+                <button class="btn btn-disabled" id="btn-friends" disabled>
+                    <span class="btn-icon">👥</span> Friends
+                </button>
+
+                <button class="btn btn-exit" id="btn-exit" data-sound="click">
+                    <span class="btn-icon">✕</span> Exit
+                </button>
+            </div>
+        </div>
+
+        <div class="menu-footer">
+            <div class="version-badge" id="version-badge">v1.0.0</div>
+            <div>© 2026 Project Phoenix. All rights reserved.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== SETTINGS SCREEN ===================== -->
+<div id="settings-screen" class="screen panel-screen">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Settings</div>
+            <button class="panel-close" id="settings-close" data-sound="click">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>Music Volume</span>
+                    <span class="setting-value" id="music-vol-val">70%</span>
+                </div>
+                <input type="range" class="slider" id="slider-music" min="0" max="100" value="70">
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>SFX Volume</span>
+                    <span class="setting-value" id="sfx-vol-val">80%</span>
+                </div>
+                <input type="range" class="slider" id="slider-sfx" min="0" max="100" value="80">
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label"><span>Graphics Quality</span></div>
+                <div class="select-group" id="graphics-select">
+                    <div class="select-option" data-value="low">Low</div>
+                    <div class="select-option active" data-value="medium">Medium</div>
+                    <div class="select-option" data-value="high">High</div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label"><span>Target FPS</span></div>
+                <div class="select-group" id="fps-select">
+                    <div class="select-option" data-value="30">30</div>
+                    <div class="select-option active" data-value="60">60</div>
+                    <div class="select-option" data-value="120">120</div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label"><span>Language</span></div>
+                <div class="select-group" id="lang-select">
+                    <div class="select-option active" data-value="en">English</div>
+                    <div class="select-option" data-value="es">Español</div>
+                    <div class="select-option" data-value="pt">Português</div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>Sensitivity</span>
+                    <span class="setting-value" id="sens-val">50%</span>
+                </div>
+                <input type="range" class="slider" id="slider-sensitivity" min="0" max="100" value="50">
+            </div>
+
+            <div class="panel-actions">
+                <button class="btn btn-sm btn-danger" id="btn-reset-settings" data-sound="click">Reset</button>
+                <button class="btn btn-sm btn-primary" id="btn-settings-done" data-sound="click" style="flex:1">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== ABOUT SCREEN ===================== -->
+<div id="about-screen" class="screen panel-screen">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">About</div>
+            <button class="panel-close" id="about-close" data-sound="click">✕</button>
+        </div>
+        <div class="panel-body about-content">
+            <h3>PROJECT PHOENIX</h3>
+            <p>A premium browser-based Battle Royale experience. Survive, strategize, and become the last one standing.</p>
+
+            <h3>Version</h3>
+            <p>1.0.0 – Foundation</p>
+
+            <h3>Developer</h3>
+            <p>Project Phoenix Team</p>
+
+            <h3>Roadmap</h3>
+            <p>This is Version 1 of 25. Future versions will introduce 3D world, player movement, weapons, vehicles, AI bots, multiplayer, inventory, and full battle royale mechanics.</p>
+
+            <h3>Credits</h3>
+            <p>Built with modern web technologies. Architecture designed for long-term expansion.</p>
+
+            <div class="about-meta">
+                © 2026 Project Phoenix<br>
+                All rights reserved.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== POPUP OVERLAY ===================== -->
+<div id="popup-overlay">
+    <div class="popup">
+        <div class="popup-title" id="popup-title">Title</div>
+        <div class="popup-message" id="popup-message">Message</div>
+        <div class="popup-actions" id="popup-actions"></div>
+    </div>
+</div>
+
+<!-- ===================== TOAST CONTAINER ===================== -->
+<div id="toast-container"></div>
+
+<script>
+/* ==========================================================================
+   PROJECT PHOENIX – BATTLE ROYALE
+   Version 1.0.0 – Foundation
+   Single-file architecture. Expandable through Versions 2–25.
+   ========================================================================== */
+
+/* ========================= VERSION HISTORY =========================
+   v1.0.0 (2026-08-02)
+   - Foundation architecture created
+   - Splash + Loading + Main Menu
+   - Settings, About, Save, Audio, UI, Event, Animation systems
+   - Glassmorphism UI, responsive design, particle background
+   - Notification & Popup systems
+   Future versions will append entries below this block.
+   ========================================================================== */
+
+/* ========================= CHANGELOG =========================
+   [1.0.0] 2026-08-02
+   Added:
+     - Complete single-file foundation
+     - GameManager, UIManager, AudioManager, SaveManager, SettingsManager
+     - EventSystem, AnimationManager, Logger
+     - Splash, Loading, Main Menu, Settings, About screens
+     - Toast notifications & Popup system
+     - Animated particle background
+     - LocalStorage save with forward compatibility
+   Improved: —
+   Optimized: —
+   Fixed: —
+   ========================================================================== */
+
+'use strict';
+
+/* ==========================================================================
+   GLOBAL CONFIGURATION
+   ========================================================================== */
+const CONFIG = {
+    gameName: 'PROJECT PHOENIX',
+    version: '1.0.0',
+    saveVersion: 1,
+    targetFPS: 60,
+    debug: false,
+    animSpeed: 1,
+    defaultVolumes: {
+        master: 1.0,
+        music: 0.7,
+        sfx: 0.8,
+        ui: 0.75,
+        voice: 0.9,
+        ambient: 0.5
+    },
+    defaultGraphics: 'medium',
+    defaultFPS: 60,
+    defaultLanguage: 'en',
+    defaultSensitivity: 50,
+    uiScale: 1,
+    splashDuration: 2800,
+    loadingMinDuration: 2200,
+    loadingTips: [
+        'Stay inside the safe zone.',
+        'Collect better equipment.',
+        'Watch your surroundings.',
+        'Vehicles help you travel faster.',
+        'Higher ground gives better visibility.',
+        'Listen carefully for footsteps.',
+        'Share resources with your squad.',
+        'The storm closes faster in the endgame.',
+        'Use cover to your advantage.',
+        'Keep moving when the zone shrinks.'
+    ]
+};
+
+/* ==========================================================================
+   LOGGER
+   ========================================================================== */
+const Logger = {
+    info(...args) {
+        if (CONFIG.debug) console.log('[PHOENIX]', ...args);
+    },
+    warn(...args) {
+        console.warn('[PHOENIX]', ...args);
+    },
+    error(...args) {
+        console.error('[PHOENIX]', ...args);
+    }
+};
+
+/* ==========================================================================
+   EVENT SYSTEM
+   ========================================================================== */
+class EventSystem {
+    constructor() {
+        this._listeners = new Map();
+    }
+
+    on(event, callback, context = null) {
+        if (!this._listeners.has(event)) this._listeners.set(event, []);
+        this._listeners.get(event).push({ callback, context });
+        return () => this.off(event, callback);
+    }
+
+    off(event, callback) {
+        const list = this._listeners.get(event);
+        if (!list) return;
+        const idx = list.findIndex(l => l.callback === callback);
+        if (idx !== -1) list.splice(idx, 1);
+    }
+
+    emit(event, data = null) {
+        const list = this._listeners.get(event);
+        if (!list) return;
+        // copy to avoid mutation during emit
+        [...list].forEach(({ callback, context }) => {
+            try {
+                callback.call(context, data);
+            } catch (e) {
+                Logger.error('Event handler error:', event, e);
+            }
+        });
+    }
+
+    clear(event) {
+        if (event) this._listeners.delete(event);
+        else this._listeners.clear();
+    }
+}
+
+const Events = new EventSystem();
+
+/* ==========================================================================
+   UTILITY FUNCTIONS
+   ========================================================================== */
+const Utils = {
+    clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+    },
+    lerp(a, b, t) {
+        return a + (b - a) * t;
+    },
+    randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    randomPick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    },
+    generateId(prefix = 'PHX') {
+        const n = Math.floor(Math.random() * 900000) + 100000;
+        return `${prefix}-${n}`;
+    },
+    $(sel) {
+        return document.querySelector(sel);
+    },
+    $$(sel) {
+        return document.querySelectorAll(sel);
+    },
+    isMobile() {
+        return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+               (window.innerWidth <= 768 && 'ontouchstart' in window);
+    },
+    debounce(fn, wait) {
+        let t;
+        return (...args) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn(...args), wait);
+        };
+    }
+};
+
+/* ==========================================================================
+   SAVE MANAGER
+   ========================================================================== */
+class SaveManager {
+    constructor() {
+        this.key = 'phoenix_save_v1';
+        this.data = null;
+    }
+
+    getDefault() {
+        return {
+            saveVersion: CONFIG.saveVersion,
+            playerName: 'Commander',
+            playerId: Utils.generateId(),
+            coins: 500,
+            diamonds: 50,
+            level: 1,
+            firstLaunch: true,
+            lastOpenVersion: CONFIG.version,
+            settings: {
+                musicVolume: CONFIG.defaultVolumes.music * 100,
+                sfxVolume: CONFIG.defaultVolumes.sfx * 100,
+                graphics: CONFIG.defaultGraphics,
+                fps: CONFIG.defaultFPS,
+                language: CONFIG.defaultLanguage,
+                sensitivity: CONFIG.defaultSensitivity
+            },
+            // Reserved for future: inventory, stats, achievements, etc.
+            _meta: { created: Date.now(), updated: Date.now() }
+        };
+    }
+
+    load() {
+        try {
+            const raw = localStorage.getItem(this.key);
+            if (!raw) {
+                this.data = this.getDefault();
+                this.save();
+                Logger.info('Created new save data');
+                return this.data;
+            }
+            const parsed = JSON.parse(raw);
+            // Merge with defaults to preserve unknown future keys and fill missing ones
+            this.data = this._merge(this.getDefault(), parsed);
+            this.data.lastOpenVersion = CONFIG.version;
+            this.data._meta = this.data._meta || {};
+            this.data._meta.updated = Date.now();
+            this.save();
+            Logger.info('Save loaded');
+            return this.data;
+        } catch (e) {
+            Logger.error('Save load failed, using defaults', e);
+            this.data = this.getDefault();
+            this.save();
+            return this.data;
+        }
+    }
+
+    save() {
+        try {
+            if (!this.data) return;
+            this.data._meta = this.data._meta || {};
+            this.data._meta.updated = Date.now();
+            localStorage.setItem(this.key, JSON.stringify(this.data));
+        } catch (e) {
+            Logger.error('Save write failed', e);
+        }
+    }
+
+    get(path, fallback = null) {
+        if (!this.data) return fallback;
+        const parts = path.split('.');
+        let cur = this.data;
+        for (const p of parts) {
+            if (cur == null || typeof cur !== 'object') return fallback;
+            cur = cur[p];
+        }
+        return cur !== undefined ? cur : fallback;
+    }
+
+    set(path, value) {
+        if (!this.data) this.load();
+        const parts = path.split('.');
+        let cur = this.data;
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (cur[parts[i]] == null || typeof cur[parts[i]] !== 'object') {
+                cur[parts[i]] = {};
+            }
+            cur = cur[parts[i]];
+        }
+        cur[parts[parts.length - 1]] = value;
+        this.save();
+        Events.emit('save:updated', { path, value });
+    }
+
+    _merge(defaults, stored) {
+        const result = { ...defaults };
+        for (const key of Object.keys(stored)) {
+            if (key === 'settings' && typeof stored.settings === 'object') {
+                result.settings = { ...defaults.settings, ...stored.settings };
+            } else if (stored[key] !== undefined) {
+                result[key] = stored[key];
+            }
+        }
+        return result;
+    }
+
+    resetSettings() {
+        if (!this.data) return;
+        this.data.settings = this.getDefault().settings;
+        this.save();
+        Events.emit('settings:reset');
+    }
+}
+
+/* ==========================================================================
+   SETTINGS MANAGER
+   ========================================================================== */
+class SettingsManager {
+    constructor(saveManager) {
+        this.save = saveManager;
+    }
+
+    get(key) {
+        return this.save.get(`settings.${key}`);
+    }
+
+    set(key, value) {
+        this.save.set(`settings.${key}`, value);
+        Events.emit('settings:changed', { key, value });
+    }
+
+    applyAll() {
+        const s = this.save.get('settings') || {};
+        Events.emit('settings:apply', s);
+        return s;
+    }
+
+    reset() {
+        this.save.resetSettings();
+        this.applyAll();
+    }
+}
+
+/* ==========================================================================
+   AUDIO MANAGER
+   ========================================================================== */
+class AudioManager {
+    constructor() {
+        this.enabled = true;
+        this.volumes = {
+            master: CONFIG.defaultVolumes.master,
+            music: CONFIG.defaultVolumes.music,
+            sfx: CONFIG.defaultVolumes.sfx,
+            ui: CONFIG.defaultVolumes.ui,
+            voice: CONFIG.defaultVolumes.voice,
+            ambient: CONFIG.defaultVolumes.ambient
+        };
+        this.muted = false;
+        this._ctx = null;
+        this._buffers = {};
+        this._initialized = false;
+    }
+
+    init() {
+        if (this._initialized) return;
+        try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) this._ctx = new AC();
+            this._initialized = true;
+            Logger.info('AudioManager ready');
+        } catch (e) {
+            Logger.warn('AudioContext unavailable', e);
+        }
+    }
+
+    setVolume(category, value) {
+        if (this.volumes[category] !== undefined) {
+            this.volumes[category] = Utils.clamp(value, 0, 1);
+            Events.emit('audio:volume', { category, value: this.volumes[category] });
+        }
+    }
+
+    setMaster(value) {
+        this.setVolume('master', value);
+    }
+
+    mute(state) {
+        this.muted = !!state;
+        Events.emit('audio:mute', this.muted);
+    }
+
+    // Placeholder play – future versions will load real buffers
+    play(category = 'ui', _name = 'click') {
+        if (!this.enabled || this.muted) return;
+        // Architecture ready for real sounds; silent in v1
+        // When assets exist: create BufferSource, connect gain, start
+    }
+
+    playUI(name = 'click') {
+        this.play('ui', name);
+    }
+
+    resume() {
+        if (this._ctx && this._ctx.state === 'suspended') {
+            this._ctx.resume().catch(() => {});
+        }
+    }
+}
+
+/* ==========================================================================
+   ANIMATION MANAGER
+   ========================================================================== */
+class AnimationManager {
+    fadeIn(el, duration = 300) {
+        if (!el) return Promise.resolve();
+        return new Promise(resolve => {
+            el.style.transition = `opacity ${duration}ms ease`;
+            el.style.opacity = '0';
+            el.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                setTimeout(resolve, duration);
+            });
+        });
+    }
+
+    fadeOut(el, duration = 300) {
+        if (!el) return Promise.resolve();
+        return new Promise(resolve => {
+            el.style.transition = `opacity ${duration}ms ease`;
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.classList.add('hidden');
+                resolve();
+            }, duration);
+        });
+    }
+
+    scale(el, from, to, duration = 250) {
+        if (!el) return Promise.resolve();
+        return new Promise(resolve => {
+            el.style.transition = `transform ${duration}ms ease`;
+            el.style.transform = `scale(${from})`;
+            requestAnimationFrame(() => {
+                el.style.transform = `scale(${to})`;
+                setTimeout(resolve, duration);
+            });
+        });
+    }
+}
+
+/* ==========================================================================
+   NOTIFICATION SYSTEM (Toasts)
+   ========================================================================== */
+class NotificationSystem {
+    constructor() {
+        this.container = Utils.$('#toast-container');
+        this.queue = [];
+    }
+
+    show(message, type = 'info', duration = 2800) {
+        if (!this.container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icons = { info: 'ℹ', success: '✓', warning: '⚠', error: '✕' };
+        toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ'}</span><span>${message}</span>`;
+        this.container.appendChild(toast);
+
+        const remove = () => {
+            toast.classList.add('out');
+            setTimeout(() => toast.remove(), 300);
+        };
+        setTimeout(remove, duration);
+        toast.addEventListener('click', remove);
+    }
+
+    info(msg) { this.show(msg, 'info'); }
+    success(msg) { this.show(msg, 'success'); }
+    warning(msg) { this.show(msg, 'warning'); }
+    error(msg) { this.show(msg, 'error'); }
+}
+
+/* ==========================================================================
+   POPUP SYSTEM
+   ========================================================================== */
+class PopupSystem {
+    constructor() {
+        this.overlay = Utils.$('#popup-overlay');
+        this.titleEl = Utils.$('#popup-title');
+        this.messageEl = Utils.$('#popup-message');
+        this.actionsEl = Utils.$('#popup-actions');
+        this._resolve = null;
+    }
+
+    show({ title = 'Notice', message = '', buttons = [{ label: 'OK', value: true, primary: true }] } = {}) {
+        return new Promise(resolve => {
+            this._resolve = resolve;
+            this.titleEl.textContent = title;
+            this.messageEl.textContent = message;
+            this.actionsEl.innerHTML = '';
+            buttons.forEach(btn => {
+                const b = document.createElement('button');
+                b.className = `btn btn-sm ${btn.primary ? 'btn-primary' : ''}`;
+                b.textContent = btn.label;
+                b.addEventListener('click', () => this._close(btn.value));
+                this.actionsEl.appendChild(b);
+            });
+            this.overlay.classList.add('active');
+        });
+    }
+
+    _close(value) {
+        this.overlay.classList.remove('active');
+        if (this._resolve) {
+            this._resolve(value);
+            this._resolve = null;
+        }
+    }
+
+    confirm(title, message) {
+        return this.show({
+            title,
+            message,
+            buttons: [
+                { label: 'Cancel', value: false },
+                { label: 'Confirm', value: true, primary: true }
+            ]
+        });
+    }
+
+    alert(title, message) {
+        return this.show({ title, message });
+    }
+}
+
+/* ==========================================================================
+   UI MANAGER
+   ========================================================================== */
+class UIManager {
+    constructor() {
+        this.screens = {
+            splash: Utils.$('#splash-screen'),
+            loading: Utils.$('#loading-screen'),
+            menu: Utils.$('#main-menu'),
+            settings: Utils.$('#settings-screen'),
+            about: Utils.$('#about-screen')
+        };
+        this.current = 'splash';
+        this.notif = new NotificationSystem();
+        this.popup = new PopupSystem();
+        this.anim = new AnimationManager();
+    }
+
+    showScreen(name) {
+        if (!this.screens[name]) return;
+        Object.keys(this.screens).forEach(key => {
+            const el = this.screens[key];
+            if (key === name) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+        this.current = name;
+        Events.emit('ui:screen', name);
+    }
+
+    openPanel(name) {
+        if (name === 'settings' || name === 'about') {
+            this.screens[name].classList.add('active');
+            Events.emit('ui:panel', name);
+        }
+    }
+
+    closePanel(name) {
+        if (this.screens[name]) {
+            this.screens[name].classList.remove('active');
+            Events.emit('ui:panel-close', name);
+        }
+    }
+
+    updateProfile(data) {
+        const nameEl = Utils.$('#player-name');
+        const idEl = Utils.$('#player-id');
+        const coinsEl = Utils.$('#player-coins');
+        const diamondsEl = Utils.$('#player-diamonds');
+        const levelEl = Utils.$('#player-level');
+        const avatarEl = Utils.$('#player-avatar');
+        if (nameEl) nameEl.textContent = data.playerName || 'Commander';
+        if (idEl) idEl.textContent = `ID: ${data.playerId || 'PHX-000000'}`;
+        if (coinsEl) coinsEl.textContent = (data.coins || 0).toLocaleString();
+        if (diamondsEl) diamondsEl.textContent = (data.diamonds || 0).toLocaleString();
+        if (levelEl) levelEl.textContent = data.level || 1;
+        if (avatarEl) avatarEl.textContent = (data.playerName || 'P').charAt(0).toUpperCase();
+    }
+
+    setVersionBadge(v) {
+        const el = Utils.$('#version-badge');
+        if (el) el.textContent = `v${v}`;
+    }
+}
+
+/* ==========================================================================
+   LOADING SYSTEM
+   ========================================================================== */
+class LoadingSystem {
+    constructor(ui) {
+        this.ui = ui;
+        this.bar = Utils.$('#loading-bar');
+        this.percentEl = Utils.$('#loading-percent');
+        this.tipEl = Utils.$('#loading-tip');
+        this.progress = 0;
+        this.tipIndex = 0;
+        this.tipTimer = null;
+    }
+
+    start() {
+        this.progress = 0;
+        this._updateBar(0);
+        this.ui.showScreen('loading');
+        this._rotateTips();
+        return this._simulateProgress();
+    }
+
+    _updateBar(p) {
+        this.progress = Utils.clamp(p, 0, 100);
+        if (this.bar) this.bar.style.width = this.progress + '%';
+        if (this.percentEl) this.percentEl.textContent = Math.floor(this.progress) + '%';
+    }
+
+    _rotateTips() {
+        const tips = CONFIG.loadingTips;
+        const show = () => {
+            if (!this.tipEl) return;
+            this.tipEl.style.opacity = '0';
+            setTimeout(() => {
+                this.tipEl.textContent = tips[this.tipIndex % tips.length];
+                this.tipEl.style.opacity = '1';
+                this.tipIndex++;
+            }, 300);
+        };
+        show();
+        this.tipTimer = setInterval(show, 2200);
+    }
+
+    _stopTips() {
+        if (this.tipTimer) {
+            clearInterval(this.tipTimer);
+            this.tipTimer = null;
+        }
+    }
+
+    _simulateProgress() {
+        return new Promise(resolve => {
+            const start = performance.now();
+            const duration = CONFIG.loadingMinDuration;
+            const tick = (now) => {
+                const t = Utils.clamp((now - start) / duration, 0, 1);
+                // Ease-out curve for realistic feel
+                const eased = 1 - Math.pow(1 - t, 2.2);
+                this._updateBar(eased * 100);
+                if (t < 1) {
+                    requestAnimationFrame(tick);
+                } else {
+                    this._stopTips();
+                    setTimeout(resolve, 200);
+                }
+            };
+            requestAnimationFrame(tick);
+        });
+    }
+}
+
+/* ==========================================================================
+   BACKGROUND PARTICLES
+   ========================================================================== */
+class BackgroundParticles {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.running = false;
+        this._raf = null;
+        this.count = Utils.isMobile() ? 28 : 48;
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    init() {
+        this.resize();
+        this.particles = [];
+        for (let i = 0; i < this.count; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                r: Math.random() * 1.8 + 0.4,
+                vx: (Math.random() - 0.5) * 0.35,
+                vy: (Math.random() - 0.5) * 0.35,
+                a: Math.random() * 0.4 + 0.1
+            });
+        }
+    }
+
+    start() {
+        if (this.running) return;
+        this.running = true;
+        this.init();
+        const loop = () => {
+            if (!this.running) return;
+            this._draw();
+            this._raf = requestAnimationFrame(loop);
+        };
+        this._raf = requestAnimationFrame(loop);
+        window.addEventListener('resize', Utils.debounce(() => this.resize(), 150));
+    }
+
+    stop() {
+        this.running = false;
+        if (this._raf) cancelAnimationFrame(this._raf);
+    }
+
+    _draw() {
+        const { ctx, canvas, particles } = this;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const p of particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(0, 180, 255, ${p.a})`;
+            ctx.fill();
+        }
+        // subtle connection lines (desktop only for perf)
+        if (!Utils.isMobile() && particles.length > 10) {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const a = particles[i], b = particles[j];
+                    const dx = a.x - b.x, dy = a.y - b.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 110) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0,180,255,${0.08 * (1 - dist / 110)})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.moveTo(a.x, a.y);
+                        ctx.lineTo(b.x, b.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* ==========================================================================
+   GAME MANAGER (Central Orchestrator)
+   ========================================================================== */
+class GameManager {
+    constructor() {
+        this.save = new SaveManager();
+        this.settings = new SettingsManager(this.save);
+        this.audio = new AudioManager();
+        this.ui = new UIManager();
+        this.loading = new LoadingSystem(this.ui);
+        this.bg = null;
+        this.state = 'boot';
+        this.ready = false;
+    }
+
+    async init() {
+        try {
+            Logger.info('Initializing Project Phoenix v' + CONFIG.version);
+            this.save.load();
+            this.audio.init();
+            this._bindUI();
+            this._applySettingsToUI();
+            this.ui.updateProfile(this.save.data);
+            this.ui.setVersionBadge(CONFIG.version);
+
+            // Background particles
+            const canvas = Utils.$('#bg-canvas');
+            if (canvas) {
+                this.bg = new BackgroundParticles(canvas);
+                this.bg.start();
+            }
+
+            // Splash → Loading → Menu
+            await this._runSplash();
+            await this.loading.start();
+            this.ui.showScreen('menu');
+            this.state = 'menu';
+            this.ready = true;
+
+            if (this.save.get('firstLaunch')) {
+                this.save.set('firstLaunch', false);
+                this.ui.notif.info('Welcome to Project Phoenix!');
+            }
+
+            Events.emit('game:ready');
+            Logger.info('Game ready');
+        } catch (e) {
+            Logger.error('Init failed', e);
+            // Recover to menu if possible
+            try {
+                this.ui.showScreen('menu');
+            } catch (_) {}
+        }
+    }
+
+    _runSplash() {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                this.ui.showScreen('loading');
+                resolve();
+            }, CONFIG.splashDuration);
+        });
+    }
+
+    _bindUI() {
+        // Start Game (placeholder for v1)
+        const btnStart = Utils.$('#btn-start');
+        if (btnStart) {
+            btnStart.addEventListener('click', () => {
+                this.audio.playUI('click');
+                this.ui.popup.alert(
+                    'Coming Soon',
+                    'Gameplay begins in Version 2. The foundation is ready.'
+                );
+            });
+        }
+
+        // Settings
+        const btnSettings = Utils.$('#btn-settings');
+        if (btnSettings) {
+            btnSettings.addEventListener('click', () => {
+                this.audio.playUI('click');
+                this._applySettingsToUI();
+                this.ui.openPanel('settings');
+            });
+        }
+
+        // About
+        const btnAbout = Utils.$('#btn-about');
+        if (btnAbout) {
+            btnAbout.addEventListener('click', () => {
+                this.audio.playUI('click');
+                this.ui.openPanel('about');
+            });
+        }
+
+        // Close panels
+        const settingsClose = Utils.$('#settings-close');
+        const settingsDone = Utils.$('#btn-settings-done');
+        if (settingsClose) settingsClose.addEventListener('click', () => this.ui.closePanel('settings'));
+        if (settingsDone) settingsDone.addEventListener('click', () => this.ui.closePanel('settings'));
+
+        const aboutClose = Utils.$('#about-close');
+        if (aboutClose) aboutClose.addEventListener('click', () => this.ui.closePanel('about'));
+
+        // Exit (desktop)
+        const btnExit = Utils.$('#btn-exit');
+        if (btnExit) {
+            btnExit.addEventListener('click', async () => {
+                this.audio.playUI('click');
+                const ok = await this.ui.popup.confirm('Exit', 'Close Project Phoenix?');
+                if (ok) {
+                    // In browser we can only close if opened by script; otherwise notify
+                    this.ui.notif.info('Thanks for playing!');
+                }
+            });
+        }
+
+        // Volume sliders
+        const musicSlider = Utils.$('#slider-music');
+        const sfxSlider = Utils.$('#slider-sfx');
+        const sensSlider = Utils.$('#slider-sensitivity');
+
+        if (musicSlider) {
+            musicSlider.addEventListener('input', (e) => {
+                const v = +e.target.value;
+                Utils.$('#music-vol-val').textContent = v + '%';
+                this.settings.set('musicVolume', v);
+                this.audio.setVolume('music', v / 100);
+            });
+        }
+        if (sfxSlider) {
+            sfxSlider.addEventListener('input', (e) => {
+                const v = +e.target.value;
+                Utils.$('#sfx-vol-val').textContent = v + '%';
+                this.settings.set('sfxVolume', v);
+                this.audio.setVolume('sfx', v / 100);
+            });
+        }
+        if (sensSlider) {
+            sensSlider.addEventListener('input', (e) => {
+                const v = +e.target.value;
+                Utils.$('#sens-val').textContent = v + '%';
+                this.settings.set('sensitivity', v);
+            });
+        }
+
+        // Select groups
+        this._bindSelectGroup('graphics-select', 'graphics');
+        this._bindSelectGroup('fps-select', 'fps', (v) => parseInt(v, 10));
+        this._bindSelectGroup('lang-select', 'language');
+
+        // Reset settings
+        const resetBtn = Utils.$('#btn-reset-settings');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async () => {
+                this.audio.playUI('click');
+                const ok = await this.ui.popup.confirm('Reset Settings', 'Restore all settings to defaults?');
+                if (ok) {
+                    this.settings.reset();
+                    this._applySettingsToUI();
+                    this.ui.notif.success('Settings reset');
+                }
+            });
+        }
+
+        // Resume audio on first interaction
+        const resumeAudio = () => {
+            this.audio.resume();
+            document.removeEventListener('pointerdown', resumeAudio);
+        };
+        document.addEventListener('pointerdown', resumeAudio, { once: true });
+
+        // Button ripple position
+        document.addEventListener('pointerdown', (e) => {
+            const btn = e.target.closest('.btn');
+            if (!btn) return;
+            const rect = btn.getBoundingClientRect();
+            btn.style.setProperty('--ripple-x', ((e.clientX - rect.left) / rect.width * 100) + '%');
+            btn.style.setProperty('--ripple-y', ((e.clientY - rect.top) / rect.height * 100) + '%');
+        });
+    }
+
+    _bindSelectGroup(id, settingKey, transform = (v) => v) {
+        const group = Utils.$('#' + id);
+        if (!group) return;
+        group.querySelectorAll('.select-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                group.querySelectorAll('.select-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                const val = transform(opt.dataset.value);
+                this.settings.set(settingKey, val);
+                this.audio.playUI('click');
+            });
+        });
+    }
+
+    _applySettingsToUI() {
+        const s = this.save.get('settings') || {};
+        const music = s.musicVolume ?? 70;
+        const sfx = s.sfxVolume ?? 80;
+        const sens = s.sensitivity ?? 50;
+
+        const musicSlider = Utils.$('#slider-music');
+        const sfxSlider = Utils.$('#slider-sfx');
+        const sensSlider = Utils.$('#slider-sensitivity');
+        if (musicSlider) { musicSlider.value = music; Utils.$('#music-vol-val').textContent = music + '%'; }
+        if (sfxSlider) { sfxSlider.value = sfx; Utils.$('#sfx-vol-val').textContent = sfx + '%'; }
+        if (sensSlider) { sensSlider.value = sens; Utils.$('#sens-val').textContent = sens + '%'; }
+
+        this.audio.setVolume('music', music / 100);
+        this.audio.setVolume('sfx', sfx / 100);
+
+        this._setActiveOption('graphics-select', s.graphics || 'medium');
+        this._setActiveOption('fps-select', String(s.fps || 60));
+        this._setActiveOption('lang-select', s.language || 'en');
+    }
+
+    _setActiveOption(groupId, value) {
+        const group = Utils.$('#' + groupId);
+        if (!group) return;
+        group.querySelectorAll('.select-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.value === String(value));
+        });
+    }
+}
+
+/* ==========================================================================
+   BOOT
+   ========================================================================== */
+(function boot() {
+    const game = new GameManager();
+    window.Phoenix = game; // debug access
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => game.init());
+    } else {
+        game.init();
+    }
+})();
+</script>
+</body>
+</html>
