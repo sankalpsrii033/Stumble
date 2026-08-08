@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>JARVIS Voice Test v1</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <style>
+    :root {
+      --bg: #05080f;
+      --accent: #00d4ff;
+      --accent-dim: rgba(0, 212, 255, 0.25);
+      --accent-glow: rgba(0, 212, 255, 0.45);
+      --text: #e8f4ff;
+      --muted: #7a93a8;
+      --user-bubble: #12304a;
+      --jarvis-bubble: #0d1f2d;
+      --danger: #ff5c7a;
+      --success: #3dffb5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%;
+      background: radial-gradient(ellipse at top, #0a1525 0%, var(--bg) 55%);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+    }
+    .app {
+      display: flex; flex-direction: column; height: 100%;
+      max-width: 720px; margin: 0 auto; padding: 16px 16px 24px;
+    }
+    header { text-align: center; padding: 8px 0 12px; flex-shrink: 0; }
+    header h1 {
+      font-size: 1.15rem; font-weight: 600; letter-spacing: 0.18em;
+      color: var(--accent); text-shadow: 0 0 18px var(--accent-glow);
+    }
+    header .subtitle { font-size: 0.72rem; color: var(--muted); margin-top: 4px; letter-spacing: 0.08em; }
+    .status-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin: 6px 0 14px; flex-shrink: 0;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--muted);
+      box-shadow: 0 0 8px transparent; transition: all 0.25s ease;
+    }
+    .status-dot.ready { background: var(--success); box-shadow: 0 0 10px rgba(61,255,181,0.5); }
+    .status-dot.listening { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); animation: pulse 1.2s infinite; }
+    .status-dot.busy { background: #ffb347; box-shadow: 0 0 10px rgba(255,179,71,0.45); }
+    .status-dot.error { background: var(--danger); box-shadow: 0 0 10px rgba(255,92,122,0.5); }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.35);opacity:0.7} }
+    #statusText { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.04em; min-height: 1.2em; }
+    .conversation {
+      flex: 1; overflow-y: auto; padding: 8px 4px 16px;
+      display: flex; flex-direction: column; gap: 12px;
+      scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+    }
+    .conversation::-webkit-scrollbar { width: 6px; }
+    .conversation::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.25); border-radius: 3px; }
+    .msg {
+      max-width: 88%; padding: 12px 14px; border-radius: 14px;
+      font-size: 0.92rem; line-height: 1.45; word-wrap: break-word;
+      animation: fadeIn 0.28s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .msg.user {
+      align-self: flex-end; background: var(--user-bubble);
+      border: 1px solid rgba(0,212,255,0.2); border-bottom-right-radius: 4px;
+    }
+    .msg.jarvis {
+      align-self: flex-start; background: var(--jarvis-bubble);
+      border: 1px solid rgba(0,212,255,0.12); border-bottom-left-radius: 4px;
+    }
+    .msg .label {
+      display: block; font-size: 0.68rem; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 4px; opacity: 0.65;
+    }
+    .msg.user .label { color: var(--accent); text-align: right; }
+    .msg.jarvis .label { color: #7fdfff; }
+    .msg.error-msg {
+      align-self: center; background: rgba(255,92,122,0.12);
+      border: 1px solid rgba(255,92,122,0.35); color: #ffb3c0;
+      font-size: 0.85rem; max-width: 95%; text-align: center;
+    }
+    .empty-hint {
+      margin: auto; text-align: center; color: var(--muted);
+      font-size: 0.9rem; opacity: 0.75; padding: 24px;
+    }
+    .controls {
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; gap: 12px; padding-top: 8px;
+    }
+    .mic-wrap {
+      position: relative; width: 92px; height: 92px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mic-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 2px solid var(--accent-dim); pointer-events: none; transition: all 0.3s ease;
+    }
+    .mic-ring.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow), inset 0 0 18px var(--accent-dim);
+      animation: ringPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.75} }
+    #micBtn {
+      width: 72px; height: 72px; border-radius: 50%; border: none;
+      background: linear-gradient(145deg, #0e2a3d, #071520);
+      color: var(--accent); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 3px var(--accent-dim), 0 8px 24px rgba(0,0,0,0.45);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      position: relative; z-index: 1;
+    }
+    #micBtn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 3px var(--accent), 0 0 28px var(--accent-glow);
+    }
+    #micBtn:active:not(:disabled) { transform: scale(0.96); }
+    #micBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #micBtn.recording {
+      background: linear-gradient(145deg, #123a52, #0a1c2a);
+      box-shadow: 0 0 0 3px var(--accent), 0 0 32px var(--accent-glow); color: #fff;
+    }
+    #micBtn.active-convo {
+      background: linear-gradient(145deg, #1a3a2a, #0a1c12);
+      box-shadow: 0 0 0 3px var(--success), 0 0 28px rgba(61,255,181,0.35);
+      color: var(--success);
+    }
+    #micBtn svg { width: 32px; height: 32px; fill: currentColor; }
+    .btn-label {
+      font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-top: -4px;
+    }
+    .bottom-row {
+      display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%;
+    }
+    .secondary-btn {
+      background: transparent; border: 1px solid rgba(122,147,168,0.35);
+      color: var(--muted); font-size: 0.78rem; padding: 8px 14px;
+      border-radius: 20px; cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s ease;
+    }
+    .secondary-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #playBtn {
+      display: none; background: var(--accent); color: #041018;
+      border: none; font-weight: 600; padding: 10px 18px;
+      border-radius: 22px; cursor: pointer; font-size: 0.85rem;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    #authHint {
+      font-size: 0.75rem; color: var(--muted); text-align: center;
+      max-width: 280px; line-height: 1.4;
+    }
+    /* Minimal settings */
+    .settings {
+      display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: center;
+      align-items: center; font-size: 0.75rem; color: var(--muted);
+      padding: 4px 0 0;
+    }
+    .settings label {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      user-select: none;
+    }
+    .settings select, .settings input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+    .settings select {
+      background: #0b1220; color: var(--text); border: 1px solid rgba(122,147,168,0.35);
+      border-radius: 8px; padding: 4px 8px; font-size: 0.75rem;
+    }
+    @media (max-width: 480px) {
+      .app { padding: 12px 12px 20px; }
+      header h1 { font-size: 1rem; }
+      .msg { max-width: 92%; font-size: 0.88rem; }
+      .mic-wrap { width: 84px; height: 84px; }
+      #micBtn { width: 64px; height: 64px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>JARVIS VOICE TEST</h1>
+      <div class="subtitle">v1 · Phase 1 · Core Conversation</div>
+    </header>
+
+    <div class="status-row">
+      <div class="status-dot ready" id="statusDot"></div>
+      <div id="statusText">Ready</div>
+    </div>
+
+    <div class="conversation" id="conversation">
+      <div class="empty-hint" id="emptyHint">
+        Press the button once to start a continuous conversation.<br />
+        Speak naturally — JARVIS listens, replies, and keeps listening.<br />
+        Press again to end. Optional: enable Wake Word in settings.
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="mic-wrap">
+        <div class="mic-ring" id="micRing"></div>
+        <button id="micBtn" aria-label="Start or End Conversation" title="Start / End Conversation">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="btn-label" id="btnLabel">Start Conversation</div>
+
+      <div class="bottom-row">
+        <button class="secondary-btn" id="clearBtn">Clear Conversation</button>
+        <button id="playBtn">Tap to play</button>
+      </div>
+
+      <div class="settings">
+        <label>
+          <input type="checkbox" id="wakeWordToggle" />
+          Wake Word (Hey JARVIS)
+        </label>
+        <label>
+          Speed
+          <select id="speedSelect">
+            <option value="0.85">Slow</option>
+            <option value="1" selected>Normal</option>
+            <option value="1.2">Fast</option>
+          </select>
+        </label>
+      </div>
+      <div id="authHint"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // ─── Configurable VAD / silence ─────────────────────────────────
+      const SILENCE_DURATION = 1800;
+      const VOICE_THRESHOLD = 22;
+      const MIN_RECORDING_DURATION = 1100;
+      const SPEECH_START_FRAMES = 5;
+      const BARGE_IN_THRESHOLD = 32;
+      const TTS_GUARD_MS = 600;
+      const MIN_TRANSCRIPT_CHARS = 2;
+
+      const HALLUCINATION_PHRASES = [
+        "thank you", "thanks", "thank you.", "thanks.", "you", "bye", "goodbye",
+        "okay", "ok", "mm-hmm", "mm hmm", "uh", "um", "hmm", "huh",
+        "subscribe", "like and subscribe", "thanks for watching",
+        "धन्यवाद", "शुक्रिया", "ठीक है", "हम्म", "अच्छा"
+      ];
+
+      const WAKE_PATTERNS = [
+        /hey\s*jarvis/i,
+        /hi\s*jarvis/i,
+        /hello\s*jarvis/i,
+        /ok\s*jarvis/i,
+        /jarvis/i,
+        /हे\s*जार्विस/i,
+        /हे\s*jarvis/i
+      ];
+
+      const SYSTEM_PROMPT = `You are JARVIS, a personal AI assistant prototype.
+You are intelligent, calm, concise, confident and conversational.
+Speak naturally like a futuristic personal assistant — helpful, never robotic or overly formal.
+The user may speak in English, Hindi or Hinglish. Always reply in the same language/style as the user.
+For voice responses, keep answers reasonably concise and conversational.
+Do not use markdown, bullet symbols, code formatting, or stage directions in your replies — plain spoken sentences only.
+Do not pretend you can control the user's device or perform actions that have not been implemented.
+This is only a voice conversation prototype.
+Tone: calm, intelligent, slightly futuristic. Be friendly when the user is casual; more serious when the topic is serious.`;
+
+      // ─── State ──────────────────────────────────────────────────────
+      let messages = [{ role: "system", content: SYSTEM_PROMPT }];
+      let conversationActive = false;
+      let wakeModeIdle = false;       // true when waiting for "Hey JARVIS"
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let isRecording = false;
+      let currentAudio = null;
+      let isBusy = false;
+      let recordStartTime = 0;
+
+      let micStream = null;
+      let audioContext = null;
+      let analyser = null;
+      let vadInterval = null;
+      let silenceStart = null;
+      let speechFrames = 0;
+      let isUserSpeaking = false;
+      let ttsGuardUntil = 0;
+      let mode = "idle"; // idle | listening | recording | processing | speaking | wake
+
+      // ─── DOM ────────────────────────────────────────────────────────
+      const conversationEl = document.getElementById("conversation");
+      const emptyHint = document.getElementById("emptyHint");
+      const statusDot = document.getElementById("statusDot");
+      const statusText = document.getElementById("statusText");
+      const micBtn = document.getElementById("micBtn");
+      const micRing = document.getElementById("micRing");
+      const btnLabel = document.getElementById("btnLabel");
+      const clearBtn = document.getElementById("clearBtn");
+      const playBtn = document.getElementById("playBtn");
+      const authHint = document.getElementById("authHint");
+      const wakeWordToggle = document.getElementById("wakeWordToggle");
+      const speedSelect = document.getElementById("speedSelect");
+
+      function setStatus(state, text) {
+        statusDot.className = "status-dot " + state;
+        statusText.textContent = text;
+      }
+
+      function updateBtnLabel() {
+        if (conversationActive) {
+          btnLabel.textContent = "End Conversation";
+        } else if (wakeModeIdle) {
+          btnLabel.textContent = "End Wake Mode";
+        } else {
+          btnLabel.textContent = "Start Conversation";
+        }
+      }
+
+      function addMessage(role, text) {
+        if (emptyHint && emptyHint.parentNode) emptyHint.remove();
+        const div = document.createElement("div");
+        div.className = "msg " + (role === "user" ? "user" : "jarvis");
+        const label = document.createElement("span");
+        label.className = "label";
+        label.textContent = role === "user" ? "You" : "JARVIS";
+        div.appendChild(label);
+        div.appendChild(document.createTextNode(text));
+        conversationEl.appendChild(div);
+        conversationEl.scrollTop = conversationEl.scrollHeight;
+      }
+
+      function addError(text) {
+        if (emptyHint && emptyHint.parentNode) emptyHint.remove();
+        const div = document.createElement("div");
+        div.className = "msg error-msg";
+        div.textContent = text;
+        conversationEl.appendChild(div);
+        conversationEl.scrollTop = conversationEl.scrollHeight;
+      }
+
+      function extractText(value) {
+        if (value == null) return "";
+        if (typeof value === "string") return value.trim();
+        if (typeof value === "object") {
+          if (typeof value.text === "string") return value.text.trim();
+          if (value.message) {
+            const c = value.message.content;
+            if (typeof c === "string") return c.trim();
+            if (Array.isArray(c)) {
+              return c.filter(b => b && (b.type === "text" || typeof b.text === "string"))
+                      .map(b => b.text || "").join("").trim();
+            }
+          }
+          if (typeof value.content === "string") return value.content.trim();
+        }
+        return "";
+      }
+
+      function friendlyError(err) {
+        if (!err) return "Unknown error";
+        if (typeof err === "string") return err;
+        if (err.message) return err.message;
+        if (err.error) return String(err.error);
+        if (err.msg) return String(err.msg);
+        try { return JSON.stringify(err); } catch (e) { return String(err); }
+      }
+
+      // Light STT cleanup — preserve meaning, remove obvious noise
+      function cleanTranscript(text) {
+        if (!text) return "";
+        let t = text.trim();
+        // Collapse repeated consecutive words: "the the" → "the"
+        t = t.replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
+        // Remove leading filler if the rest is substantial
+        t = t.replace(/^(um+|uh+|erm+|hmm+|ah+)\s+/i, "");
+        // Trim extra spaces
+        t = t.replace(/\s{2,}/g, " ").trim();
+        return t;
+      }
+
+      // Strip markdown / symbols so TTS doesn't read them aloud
+      function cleanForSpeech(text) {
+        if (!text) return "";
+        let t = text;
+        t = t.replace(/```[\s\S]*?```/g, " ");
+        t = t.replace(/`([^`]+)`/g, "$1");
+        t = t.replace(/\*\*([^*]+)\*\*/g, "$1");
+        t = t.replace(/\*([^*]+)\*/g, "$1");
+        t = t.replace(/__([^_]+)__/g, "$1");
+        t = t.replace(/_([^_]+)_/g, "$1");
+        t = t.replace(/^#+\s*/gm, "");
+        t = t.replace(/^\s*[-*•]\s+/gm, "");
+        t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+        t = t.replace(/https?:\/\/\S+/g, "");
+        t = t.replace(/\s{2,}/g, " ").trim();
+        return t;
+      }
+
+      function isHallucination(text) {
+        if (!text) return true;
+        const t = text.trim().toLowerCase().replace(/[.,!?]+$/g, "");
+        if (t.length < MIN_TRANSCRIPT_CHARS) return true;
+        for (const h of HALLUCINATION_PHRASES) {
+          if (t === h || t === h + "." || t === h + "!") return true;
+        }
+        if (t.split(/\s+/).length === 1 && t.length <= 3) return true;
+        return false;
+      }
+
+      function matchesWakeWord(text) {
+        if (!text) return false;
+        return WAKE_PATTERNS.some(re => re.test(text));
+      }
+
+      // ─── Auth ───────────────────────────────────────────────────────
+      async function ensureSignedIn() {
+        try {
+          if (typeof puter === "undefined" || !puter.auth) {
+            throw new Error("Puter.js not loaded. Refresh the page.");
+          }
+          if (puter.auth.isSignedIn && puter.auth.isSignedIn()) {
+            authHint.textContent = "";
+            return true;
+          }
+          setStatus("busy", "Sign in required...");
+          authHint.textContent = "Allow the Puter sign-in popup...";
+          await puter.auth.signIn({ attempt_temp_user_creation: true });
+          authHint.textContent = "Signed in ✓";
+          setTimeout(() => authHint.textContent = "", 2500);
+          return true;
+        } catch (err) {
+          authHint.textContent = "";
+          addError("Puter sign-in failed or cancelled. Error: " + friendlyError(err));
+          setStatus("error", "Sign-in needed");
+          return false;
+        }
+      }
+
+      // ─── WAV conversion (fallback only) ─────────────────────────────
+      async function blobToWavFile(blob) {
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          const numChannels = 1;
+          const sampleRate = audioBuffer.sampleRate;
+          const length = audioBuffer.length;
+          const channelData = audioBuffer.getChannelData(0);
+          const buffer = new ArrayBuffer(44 + length * 2);
+          const view = new DataView(buffer);
+          function writeString(offset, str) {
+            for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+          }
+          writeString(0, "RIFF");
+          view.setUint32(4, 36 + length * 2, true);
+          writeString(8, "WAVE");
+          writeString(12, "fmt ");
+          view.setUint32(16, 16, true);
+          view.setUint16(20, 1, true);
+          view.setUint16(22, numChannels, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, sampleRate * numChannels * 2, true);
+          view.setUint16(32, numChannels * 2, true);
+          view.setUint16(34, 16, true);
+          writeString(36, "data");
+          view.setUint32(40, length * 2, true);
+          let offset = 44;
+          for (let i = 0; i < length; i++) {
+            let s = Math.max(-1, Math.min(1, channelData[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            offset += 2;
+          }
+          audioCtx.close();
+          return new File([buffer], "recording.wav", { type: "audio/wav" });
+        } catch (e) {
+          const ext = (blob.type || "").includes("mp4") ? "mp4" : "webm";
+          return new File([blob], "recording." + ext, { type: blob.type || "audio/webm" });
+        }
+      }
+
+      function getVolume() {
+        if (!analyser) return 0;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        return sum / data.length;
+      }
+
+      // ─── Mic stream setup (shared) ──────────────────────────────────
+      async function openMic() {
+        if (micStream) return true;
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: 1
+          }
+        });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.4;
+        source.connect(analyser);
+        return true;
+      }
+
+      function closeMic() {
+        stopVad();
+        stopMediaRecorder(true);
+        if (micStream) {
+          micStream.getTracks().forEach(t => t.stop());
+          micStream = null;
+        }
+        if (audioContext) {
+          try { audioContext.close(); } catch (e) {}
+          audioContext = null;
+          analyser = null;
+        }
+      }
+
+      // ─── Start / End ────────────────────────────────────────────────
+      async function startConversation(fromWake) {
+        if (conversationActive) return;
+
+        const ok = await ensureSignedIn();
+        if (!ok) return;
+
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+          addError("Microphone / MediaRecorder not supported.");
+          setStatus("error", "Unsupported");
+          return;
+        }
+
+        try {
+          await openMic();
+          wakeModeIdle = false;
+          conversationActive = true;
+          micBtn.classList.add("active-convo");
+          micRing.classList.add("active");
+          updateBtnLabel();
+
+          // Short greeting then listen (skip if already activated via wake word "Yes?")
+          if (!fromWake) {
+            await playGreeting("Hello. How can I help you?");
+          }
+          if (conversationActive) beginListeningCycle();
+        } catch (err) {
+          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+            addError("Microphone permission is required for voice conversation.");
+            setStatus("error", "Permission denied");
+          } else {
+            addError("Mic error: " + friendlyError(err));
+            setStatus("error", "Mic error");
+          }
+          endConversation();
+        }
+      }
+
+      function endConversation() {
+        conversationActive = false;
+        wakeModeIdle = false;
+        mode = "idle";
+        isBusy = false;
+        isRecording = false;
+        isUserSpeaking = false;
+        speechFrames = 0;
+        silenceStart = null;
+
+        stopVad();
+        stopMediaRecorder(true);
+
+        if (currentAudio) {
+          try { currentAudio.pause(); currentAudio.currentTime = 0; } catch (e) {}
+          currentAudio = null;
+        }
+        closeMic();
+
+        micBtn.classList.remove("recording", "active-convo");
+        micRing.classList.remove("active");
+        playBtn.style.display = "none";
+        playBtn.onclick = null;
+        setStatus("ready", "Ready");
+        updateBtnLabel();
+      }
+
+      // ─── Wake word idle mode ────────────────────────────────────────
+      async function startWakeIdle() {
+        const ok = await ensureSignedIn();
+        if (!ok) return;
+        try {
+          await openMic();
+          wakeModeIdle = true;
+          conversationActive = false;
+          mode = "wake";
+          micBtn.classList.add("active-convo");
+          micRing.classList.add("active");
+          setStatus("listening", "Say \"Hey JARVIS\"...");
+          updateBtnLabel();
+          beginWakeCycle();
+        } catch (err) {
+          addError("Mic error: " + friendlyError(err));
+          endConversation();
+        }
+      }
+
+      function beginWakeCycle() {
+        if (!wakeModeIdle) return;
+        mode = "wake";
+        isUserSpeaking = false;
+        speechFrames = 0;
+        silenceStart = null;
+        audioChunks = [];
+        setStatus("listening", "Say \"Hey JARVIS\"...");
+        stopVad();
+        vadInterval = setInterval(wakeVadTick, 50);
+      }
+
+      function wakeVadTick() {
+        if (!wakeModeIdle || !analyser) return;
+        if (isBusy) return;
+
+        const now = Date.now();
+        const vol = getVolume();
+
+        if (vol >= VOICE_THRESHOLD) {
+          speechFrames++;
+          silenceStart = null;
+          if (!isUserSpeaking && speechFrames >= SPEECH_START_FRAMES) {
+            isUserSpeaking = true;
+            startUtteranceRecording();
+            mode = "recording";
+          }
+        } else {
+          speechFrames = 0;
+          if (isUserSpeaking) {
+            if (silenceStart === null) silenceStart = now;
+            else if (now - silenceStart >= 900) {
+              const duration = now - recordStartTime;
+              if (duration >= 600) {
+                finishWakeUtterance();
+              } else {
+                cancelUtterance();
+                if (wakeModeIdle) beginWakeCycle();
+              }
+            }
+          }
+        }
+      }
+
+      async function finishWakeUtterance() {
+        stopVad();
+        isUserSpeaking = false;
+        const chunks = audioChunks.slice();
+        const mime = mediaRecorder?.mimeType || "audio/webm";
+        stopMediaRecorder(false);
+
+        if (!chunks.length) {
+          if (wakeModeIdle) beginWakeCycle();
+          return;
+        }
+
+        const rawBlob = new Blob(chunks, { type: mime });
+        if (rawBlob.size < 800) {
+          if (wakeModeIdle) beginWakeCycle();
+          return;
+        }
+
+        isBusy = true;
+        setStatus("busy", "Checking...");
+        try {
+          const file = new File([rawBlob], "wake.webm", { type: mime });
+          let result;
+          try {
+            result = await puter.ai.speech2txt(file);
+          } catch (e) {
+            result = await puter.ai.speech2txt(file, { model: "whisper-1" });
+          }
+          const text = cleanTranscript(extractText(result));
+          if (matchesWakeWord(text)) {
+            isBusy = false;
+            wakeModeIdle = false;
+            // Activate conversation
+            await playGreeting("Yes?");
+            conversationActive = true;
+            updateBtnLabel();
+            if (conversationActive) beginListeningCycle();
+          } else {
+            // Not the wake word — ignore
+            isBusy = false;
+            if (wakeModeIdle) beginWakeCycle();
+          }
+        } catch (err) {
+          isBusy = false;
+          if (wakeModeIdle) beginWakeCycle();
+        }
+      }
+
+      // ─── VAD for active conversation ────────────────────────────────
+      function stopVad() {
+        if (vadInterval) {
+          clearInterval(vadInterval);
+          vadInterval = null;
+        }
+      }
+
+      function beginListeningCycle() {
+        if (!conversationActive) return;
+        mode = "listening";
+        isUserSpeaking = false;
+        speechFrames = 0;
+        silenceStart = null;
+        audioChunks = [];
+        setStatus("listening", "Listening...");
+        micBtn.classList.add("recording");
+        micRing.classList.add("active");
+        stopVad();
+        vadInterval = setInterval(vadTick, 50);
+      }
+
+      function vadTick() {
+        if (!conversationActive || !analyser) return;
+        if (mode === "processing") return;
+
+        const now = Date.now();
+        const vol = getVolume();
+
+        // Barge-in while speaking
+        if (mode === "speaking") {
+          if (now < ttsGuardUntil) return;
+          if (vol >= BARGE_IN_THRESHOLD) {
+            if (currentAudio) {
+              try { currentAudio.pause(); currentAudio.currentTime = 0; } catch (e) {}
+              currentAudio = null;
+            }
+            mode = "listening";
+            isBusy = false;
+            setStatus("listening", "Listening...");
+            // fall through to speech-start logic
+          } else {
+            return;
+          }
+        }
+
+        if (mode === "listening" || mode === "recording") {
+          if (vol >= VOICE_THRESHOLD) {
+            speechFrames++;
+            silenceStart = null;
+            if (!isUserSpeaking && speechFrames >= SPEECH_START_FRAMES) {
+              isUserSpeaking = true;
+              startUtteranceRecording();
+            }
+          } else {
+            speechFrames = 0;
+            if (isUserSpeaking) {
+              if (silenceStart === null) silenceStart = now;
+              else if (now - silenceStart >= SILENCE_DURATION) {
+                const duration = now - recordStartTime;
+                if (duration >= MIN_RECORDING_DURATION) {
+                  finishUtterance();
+                } else {
+                  cancelUtterance();
+                }
+              }
+            }
+          }
+        }
+      }
+
+      function startUtteranceRecording() {
+        if (isRecording || !micStream) return;
+        audioChunks = [];
+        const candidates = [
+          "audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"
+        ];
+        let mime = "";
+        for (const c of candidates) {
+          if (MediaRecorder.isTypeSupported(c)) { mime = c; break; }
+        }
+        try {
+          mediaRecorder = new MediaRecorder(micStream, mime ? { mimeType: mime } : {});
+          mediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) audioChunks.push(e.data);
+          };
+          mediaRecorder.onerror = () => cancelUtterance();
+          mediaRecorder.onstop = () => {};
+          mediaRecorder.start(200);
+          isRecording = true;
+          recordStartTime = Date.now();
+          mode = "recording";
+          setStatus("listening", "Listening to you...");
+        } catch (e) {
+          cancelUtterance();
+        }
+      }
+
+      function stopMediaRecorder(release) {
+        if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+          try { mediaRecorder.requestData(); } catch (e) {}
+          try { mediaRecorder.stop(); } catch (e) {}
+        }
+        mediaRecorder = null;
+        isRecording = false;
+        if (release) audioChunks = [];
+      }
+
+      function cancelUtterance() {
+        stopMediaRecorder(true);
+        isUserSpeaking = false;
+        speechFrames = 0;
+        silenceStart = null;
+        if (conversationActive) {
+          mode = "listening";
+          setStatus("listening", "Listening...");
+        }
+      }
+
+      function finishUtterance() {
+        if (!isRecording) return;
+        stopVad();
+        isUserSpeaking = false;
+        speechFrames = 0;
+        silenceStart = null;
+        const chunks = audioChunks;
+        const mime = mediaRecorder?.mimeType || "audio/webm";
+
+        if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+          try { mediaRecorder.requestData(); } catch (e) {}
+          mediaRecorder.onstop = () => {
+            mediaRecorder = null;
+            isRecording = false;
+            processUtterance(chunks, mime);
+          };
+          try { mediaRecorder.stop(); } catch (e) {
+            mediaRecorder = null;
+            isRecording = false;
+            processUtterance(chunks, mime);
+          }
+        } else {
+          isRecording = false;
+          processUtterance(chunks, mime);
+        }
+      }
+
+      // ─── Process utterance ──────────────────────────────────────────
+      async function processUtterance(chunks, mime) {
+        if (!conversationActive) return;
+        mode = "processing";
+        isBusy = true;
+        setStatus("busy", "Transcribing...");
+
+        if (!chunks || !chunks.length) {
+          isBusy = false;
+          beginListeningCycle();
+          return;
+        }
+
+        const rawBlob = new Blob(chunks, { type: mime || "audio/webm" });
+        if (rawBlob.size < 1200) {
+          isBusy = false;
+          beginListeningCycle();
+          return;
+        }
+
+        const originalFile = new File(
+          [rawBlob],
+          "recording." + ((mime || "").includes("mp4") ? "mp4" : "webm"),
+          { type: mime || "audio/webm" }
+        );
+
+        let userText = "";
+        try {
+          let sttResult = null;
+          let lastErr = null;
+          try {
+            sttResult = await puter.ai.speech2txt(originalFile);
+          } catch (e1) { lastErr = e1; }
+          if (!sttResult) {
+            try {
+              sttResult = await puter.ai.speech2txt(originalFile, { model: "whisper-1" });
+            } catch (e2) { lastErr = e2; }
+          }
+          if (!sttResult) {
+            try {
+              setStatus("busy", "Processing audio...");
+              const wavFile = await blobToWavFile(rawBlob);
+              sttResult = await puter.ai.speech2txt(wavFile);
+            } catch (e3) { lastErr = e3; }
+          }
+          if (!sttResult) throw lastErr || new Error("STT failed");
+          userText = cleanTranscript(extractText(sttResult));
+        } catch (err) {
+          console.error("STT error:", err);
+          addError("Transcription failed: " + friendlyError(err));
+          isBusy = false;
+          if (conversationActive) setTimeout(() => beginListeningCycle(), 600);
+          return;
+        }
+
+        if (isHallucination(userText)) {
+          isBusy = false;
+          if (conversationActive) beginListeningCycle();
+          return;
+        }
+
+        addMessage("user", userText);
+        messages.push({ role: "user", content: userText });
+
+        // AI
+        let aiText = "";
+        try {
+          setStatus("busy", "Thinking...");
+          const chatResult = await puter.ai.chat(messages);
+          aiText = extractText(chatResult);
+          if (!aiText) {
+            addError("JARVIS returned an empty response.");
+            isBusy = false;
+            if (conversationActive) setTimeout(() => beginListeningCycle(), 600);
+            return;
+          }
+          messages.push({ role: "assistant", content: aiText });
+          addMessage("jarvis", aiText);
+        } catch (err) {
+          addError("AI failed: " + friendlyError(err));
+          isBusy = false;
+          if (conversationActive) setTimeout(() => beginListeningCycle(), 800);
+          return;
+        }
+
+        // TTS
+        await speakText(aiText);
+      }
+
+      async function playGreeting(text) {
+        try {
+          setStatus("busy", "Speaking...");
+          mode = "speaking";
+          isBusy = true;
+          await speakText(text, true);
+        } catch (e) {
+          isBusy = false;
+        }
+      }
+
+      async function speakText(text, isGreeting) {
+        const spoken = cleanForSpeech(text);
+        if (!spoken) {
+          isBusy = false;
+          if (conversationActive && !isGreeting) beginListeningCycle();
+          return;
+        }
+        try {
+          setStatus("busy", "Speaking...");
+          mode = "speaking";
+          const audio = await puter.ai.txt2speech(spoken);
+          currentAudio = audio;
+          // Apply speed setting via playbackRate
+          const rate = parseFloat(speedSelect.value) || 1;
+          try { audio.playbackRate = rate; } catch (e) {}
+          ttsGuardUntil = Date.now() + TTS_GUARD_MS;
+
+          stopVad();
+          if (conversationActive) {
+            vadInterval = setInterval(vadTick, 50);
+          }
+
+          return new Promise((resolve) => {
+            audio.onended = () => {
+              currentAudio = null;
+              isBusy = false;
+              if (conversationActive && !isGreeting) beginListeningCycle();
+              resolve();
+            };
+            audio.onerror = () => {
+              currentAudio = null;
+              isBusy = false;
+              if (conversationActive && !isGreeting) beginListeningCycle();
+              resolve();
+            };
+            audio.play().catch(() => {
+              playBtn.style.display = "inline-block";
+              playBtn.onclick = async () => {
+                playBtn.style.display = "none";
+                try { await audio.play(); }
+                catch (e2) {
+                  currentAudio = null;
+                  isBusy = false;
+                  if (conversationActive && !isGreeting) beginListeningCycle();
+                  resolve();
+                }
+              };
+              setStatus("busy", "Tap to play response");
+            });
+          });
+        } catch (err) {
+          if (!isGreeting) addError("TTS failed (text shown): " + friendlyError(err));
+          isBusy = false;
+          if (conversationActive && !isGreeting) setTimeout(() => beginListeningCycle(), 600);
+        }
+      }
+
+      // ─── Buttons ────────────────────────────────────────────────────
+      micBtn.addEventListener("click", () => {
+        if (conversationActive || wakeModeIdle) {
+          endConversation();
+        } else if (wakeWordToggle.checked) {
+          startWakeIdle();
+        } else {
+          startConversation(false);
+        }
+      });
+
+      wakeWordToggle.addEventListener("change", () => {
+        // If turning off while in wake idle, end
+        if (!wakeWordToggle.checked && wakeModeIdle) {
+          endConversation();
+        }
+      });
+
+      clearBtn.addEventListener("click", () => {
+        if (conversationActive || wakeModeIdle) endConversation();
+        messages = [{ role: "system", content: SYSTEM_PROMPT }];
+        conversationEl.innerHTML = "";
+        const hint = document.createElement("div");
+        hint.className = "empty-hint";
+        hint.id = "emptyHint";
+        hint.innerHTML = "Press the button once to start a continuous conversation.<br />Speak naturally — JARVIS listens, replies, and keeps listening.<br />Press again to end. Optional: enable Wake Word in settings.";
+        conversationEl.appendChild(hint);
+        setStatus("ready", "Ready");
+        updateBtnLabel();
+      });
+
+      setTimeout(() => {
+        try {
+          if (puter?.auth?.isSignedIn?.()) {
+            authHint.textContent = "Signed in with Puter ✓";
+            setTimeout(() => authHint.textContent = "", 3000);
+          }
+        } catch (e) {}
+      }, 900);
+
+      setStatus("ready", "Ready");
+      updateBtnLabel();
+    })();
+  </script>
+</body>
+</html>
