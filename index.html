@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>NOVA — The Material Lab</title>
+  <meta name="description" content="A cinematic interactive 3D material exploration experience." />
+  <style>
+    :root {
+      --bg: #050505;
+      --fg: #e8e8e8;
+      --muted: #8a8a8a;
+      --accent: #c8c8c8;
+      --ui-bg: rgba(12, 12, 12, 0.72);
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: #050505;
+    }
+    canvas { display: block; width: 100%; height: 100%; outline: none; }
+    /* Loading */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #050505;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.2s;
+    }
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loader-title {
+      font-size: clamp(28px, 6vw, 48px);
+      font-weight: 300;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      opacity: 0.95;
+    }
+    .loader-sub {
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 48px;
+    }
+    .progress-wrap {
+      width: min(280px, 70vw);
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0%;
+      background: #e0e0e0;
+      transition: width 0.25s ease;
+    }
+    .progress-text {
+      margin-top: 18px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    /* Scroll content (invisible height driver) */
+    #scroll-content {
+      position: relative;
+      z-index: 1;
+      height: 650vh;
+      pointer-events: none;
+    }
+    /* Overlay UI */
+    #ui {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 32px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+    .brand {
+      font-size: 13px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+    .brand span { opacity: 0.45; font-weight: 300; }
+    .hint {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-align: right;
+      max-width: 180px;
+      line-height: 1.5;
+    }
+    /* Center titles (driven by scroll) */
+    .title-layer {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      width: 90%;
+      max-width: 640px;
+    }
+    .main-title {
+      font-size: clamp(42px, 9vw, 86px);
+      font-weight: 200;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      opacity: 0;
+      filter: blur(12px);
+      transform: translateY(20px);
+      transition: none;
+    }
+    .main-sub {
+      font-size: clamp(12px, 1.6vw, 15px);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      filter: blur(8px);
+      transform: translateY(12px);
+    }
+    /* Bottom controls */
+    .controls {
+      pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      align-items: flex-end;
+      justify-content: space-between;
+      max-width: 100%;
+    }
+    .mat-group, .light-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .mat-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .mat-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      pointer-events: auto;
+    }
+    .mat-btn:hover {
+      border-color: rgba(255,255,255,0.25);
+      color: #ddd;
+    }
+    .mat-btn.active {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.35);
+      color: #f0f0f0;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 120px;
+      height: 2px;
+      background: rgba(255,255,255,0.12);
+      outline: none;
+      border-radius: 1px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ddd;
+      cursor: pointer;
+      border: none;
+    }
+    .scroll-hint {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0.7;
+      pointer-events: none;
+      transition: opacity 0.6s;
+    }
+    .scroll-hint.hidden { opacity: 0; }
+    /* Fallback */
+    #fallback {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #050505;
+      color: #ccc;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    #fallback.show { display: flex; }
+    @media (max-width: 640px) {
+      #ui { padding: 20px 18px; }
+      .hint { display: none; }
+      .mat-btn { padding: 7px 10px; font-size: 10px; }
+      .controls { gap: 16px; }
+      input[type="range"] { width: 90px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .main-title, .main-sub { filter: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="fallback">
+    <p>WebGL is not available or was blocked in this browser.<br/>Please try a modern desktop browser with hardware acceleration enabled.</p>
+  </div>
+
+  <div id="loader">
+    <div class="loader-title">NOVA</div>
+    <div class="loader-sub">Initializing Material System</div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="progress-text" id="progress-text">00</div>
+  </div>
+
+  <div id="canvas-container"></div>
+  <div id="scroll-content"></div>
+
+  <div id="ui">
+    <div class="top-bar">
+      <div class="brand">NOVA <span>— Material Lab</span></div>
+      <div class="hint">Scroll to explore · Drag to interact</div>
+    </div>
+
+    <div class="title-layer">
+      <div class="main-title" id="main-title">NOVA</div>
+      <div class="main-sub" id="main-sub">Material beyond imagination</div>
+    </div>
+
+    <div class="controls">
+      <div class="mat-group">
+        <div class="label">Material</div>
+        <div class="mat-btns" id="mat-btns">
+          <button class="mat-btn active" data-mat="chrome">Chrome</button>
+          <button class="mat-btn" data-mat="liquid">Liquid Metal</button>
+          <button class="mat-btn" data-mat="glass">Glass</button>
+          <button class="mat-btn" data-mat="crystal">Crystal</button>
+          <button class="mat-btn" data-mat="carbon">Carbon</button>
+          <button class="mat-btn" data-mat="ceramic">Ceramic</button>
+        </div>
+      </div>
+      <div class="light-group">
+        <div class="label">Light Intensity</div>
+        <div class="slider-row">
+          <input type="range" id="light-slider" min="0.3" max="2.2" step="0.05" value="1.1" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint" id="scroll-hint">Scroll</div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    // ---------------------------------------------------------------------------
+    // Utilities
+    // ---------------------------------------------------------------------------
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smoothstep = (edge0, edge1, x) => {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    };
+    const map = (v, a, b, c, d) => c + (d - c) * ((v - a) / (b - a));
+
+    // ---------------------------------------------------------------------------
+    // State
+    // ---------------------------------------------------------------------------
+    const state = {
+      progress: 0,
+      targetProgress: 0,
+      mouse: new THREE.Vector2(0, 0),
+      smoothMouse: new THREE.Vector2(0, 0),
+      lightIntensity: 1.1,
+      material: 'chrome',
+      isDragging: false,
+      dragObject: null,
+      reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      isMobile: /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth < 768,
+      quality: 1,
+      time: 0
+    };
+
+    // ---------------------------------------------------------------------------
+    // DOM
+    // ---------------------------------------------------------------------------
+    const loaderEl = document.getElementById('loader');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const mainTitle = document.getElementById('main-title');
+    const mainSub = document.getElementById('main-sub');
+    const scrollHint = document.getElementById('scroll-hint');
+    const lightSlider = document.getElementById('light-slider');
+    const matBtns = document.querySelectorAll('.mat-btn');
+    const fallback = document.getElementById('fallback');
+
+    // ---------------------------------------------------------------------------
+    // Renderer / Scene / Camera
+    // ---------------------------------------------------------------------------
+    let renderer, scene, camera, composer, bloomPass;
+    let keyLight, rimLight, fillLight, coreLight;
+    let novaGroup, coreMesh, shellMeshes = [], ringMeshes = [], floatParts = [];
+    let particleSystem, particlePositions, particleVel;
+    let envMap;
+    let clock = new THREE.Clock();
+
+    function initRenderer() {
+      const container = document.getElementById('canvas-container');
+      renderer = new THREE.WebGLRenderer({
+        antialias: !state.isMobile,
+        powerPreference: 'high-performance',
+        alpha: false
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, state.isMobile ? 1.5 : 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      container.appendChild(renderer.domElement);
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050505);
+      scene.fog = new THREE.FogExp2(0x050505, 0.045);
+
+      camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0.6, 9);
+
+      // Environment
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const room = new RoomEnvironment();
+      envMap = pmrem.fromScene(room, 0.04).texture;
+      scene.environment = envMap;
+      scene.environmentIntensity = 0.55;
+      pmrem.dispose();
+      room.dispose?.();
+
+      // Lights
+      keyLight = new THREE.DirectionalLight(0xfff5e8, 1.8);
+      keyLight.position.set(4.5, 6, 3.5);
+      keyLight.castShadow = false;
+      scene.add(keyLight);
+
+      rimLight = new THREE.DirectionalLight(0xb8d4ff, 0.9);
+      rimLight.position.set(-5, 2, -4);
+      scene.add(rimLight);
+
+      fillLight = new THREE.AmbientLight(0x404050, 0.25);
+      scene.add(fillLight);
+
+      coreLight = new THREE.PointLight(0xaaccff, 1.4, 8, 1.6);
+      coreLight.position.set(0, 0, 0);
+      scene.add(coreLight);
+
+      // Post
+      composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+
+      bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.55, 0.4, 0.85
+      );
+      composer.addPass(bloomPass);
+
+      // Subtle vignette + grain
+      const vignetteShader = {
+        uniforms: {
+          tDiffuse: { value: null },
+          offset: { value: 1.05 },
+          darkness: { value: 1.15 },
+          grain: { value: 0.035 },
+          time: { value: 0 }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform float offset;
+          uniform float darkness;
+          uniform float grain;
+          uniform float time;
+          varying vec2 vUv;
+          float rand(vec2 co) {
+            return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+          }
+          void main() {
+            vec4 color = texture2D(tDiffuse, vUv);
+            vec2 uv = (vUv - 0.5) * vec2(offset);
+            float vig = smoothstep(0.8, 0.2, dot(uv, uv) * darkness);
+            color.rgb *= vig;
+            float g = (rand(vUv + time) - 0.5) * grain;
+            color.rgb += g;
+            gl_FragColor = color;
+          }
+        `
+      };
+      const vignettePass = new ShaderPass(vignetteShader);
+      composer.addPass(vignettePass);
+      composer.addPass(new OutputPass());
+
+      // store vignette for time update
+      state.vignettePass = vignettePass;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Materials
+    // ---------------------------------------------------------------------------
+    const materials = {
+      chrome: {
+        color: 0xd0d4d8,
+        metalness: 1.0,
+        roughness: 0.08,
+        envMapIntensity: 1.4,
+        transmission: 0,
+        thickness: 0,
+        ior: 1.5,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        emissive: 0x000000,
+        emissiveIntensity: 0
+      },
+      liquid: {
+        color: 0xc8d0d8,
+        metalness: 1.0,
+        roughness: 0.18,
+        envMapIntensity: 1.6,
+        transmission: 0,
+        thickness: 0,
+        ior: 1.5,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.05,
+        emissive: 0x111820,
+        emissiveIntensity: 0.15
+      },
+      glass: {
+        color: 0xe8f0f8,
+        metalness: 0.05,
+        roughness: 0.05,
+        envMapIntensity: 1.8,
+        transmission: 0.95,
+        thickness: 1.4,
+        ior: 1.52,
+        clearcoat: 1,
+        clearcoatRoughness: 0.02,
+        emissive: 0x000000,
+        emissiveIntensity: 0
+      },
+      crystal: {
+        color: 0xd8e8ff,
+        metalness: 0.1,
+        roughness: 0.12,
+        envMapIntensity: 1.5,
+        transmission: 0.85,
+        thickness: 2.2,
+        ior: 1.7,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.05,
+        emissive: 0x4060a0,
+        emissiveIntensity: 0.25
+      },
+      carbon: {
+        color: 0x1a1c1e,
+        metalness: 0.85,
+        roughness: 0.45,
+        envMapIntensity: 0.7,
+        transmission: 0,
+        thickness: 0,
+        ior: 1.5,
+        clearcoat: 0.15,
+        clearcoatRoughness: 0.4,
+        emissive: 0x000000,
+        emissiveIntensity: 0
+      },
+      ceramic: {
+        color: 0xe8e4dc,
+        metalness: 0.05,
+        roughness: 0.35,
+        envMapIntensity: 0.6,
+        transmission: 0,
+        thickness: 0,
+        ior: 1.5,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.25,
+        emissive: 0x000000,
+        emissiveIntensity: 0
+      }
+    };
+
+    function applyMaterial(name) {
+      state.material = name;
+      const m = materials[name];
+      const apply = (mesh, isCore = false) => {
+        if (!mesh || !mesh.material) return;
+        const mat = mesh.material;
+        mat.color.setHex(m.color);
+        mat.metalness = m.metalness;
+        mat.roughness = m.roughness;
+        mat.envMapIntensity = m.envMapIntensity;
+        mat.transmission = m.transmission;
+        mat.thickness = m.thickness;
+        mat.ior = m.ior;
+        mat.clearcoat = m.clearcoat;
+        mat.clearcoatRoughness = m.clearcoatRoughness;
+        if (isCore) {
+          mat.emissive.setHex(0x6080c0);
+          mat.emissiveIntensity = 0.9 + (name === 'crystal' ? 0.4 : 0);
+        } else {
+          mat.emissive.setHex(m.emissive);
+          mat.emissiveIntensity = m.emissiveIntensity;
+        }
+        mat.needsUpdate = true;
+      };
+
+      shellMeshes.forEach(m => apply(m));
+      ringMeshes.forEach(m => apply(m));
+      floatParts.forEach(p => apply(p.mesh));
+      if (coreMesh) apply(coreMesh, true);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Geometry construction — sophisticated procedural object
+    // ---------------------------------------------------------------------------
+    function createNova() {
+      novaGroup = new THREE.Group();
+      scene.add(novaGroup);
+
+      // Shared physical material base
+      const baseMat = new THREE.MeshPhysicalMaterial({
+        color: 0xd0d4d8,
+        metalness: 1,
+        roughness: 0.08,
+        envMapIntensity: 1.4,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        side: THREE.FrontSide
+      });
+
+      // --- Outer layered shell (beveled-ish via multiple scaled forms) ---
+      const shellGeo = new THREE.IcosahedronGeometry(1.55, 2);
+      const shell = new THREE.Mesh(shellGeo, baseMat.clone());
+      shell.castShadow = true;
+      shell.receiveShadow = true;
+      novaGroup.add(shell);
+      shellMeshes.push(shell);
+
+      // Second shell layer (slightly smaller, rotated)
+      const shell2 = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.38, 1),
+        baseMat.clone()
+      );
+      shell2.rotation.set(0.4, 0.7, 0.2);
+      novaGroup.add(shell2);
+      shellMeshes.push(shell2);
+
+      // Inner mechanical cage (wire-like but solid thin)
+      const cageGeo = new THREE.TorusKnotGeometry(0.95, 0.04, 120, 12, 2, 3);
+      const cage = new THREE.Mesh(cageGeo, baseMat.clone());
+      cage.rotation.x = Math.PI / 2;
+      novaGroup.add(cage);
+      shellMeshes.push(cage);
+
+      // Orbital rings
+      const ringMat = baseMat.clone();
+      const createRing = (radius, tube, rx, ry, rz) => {
+        const geo = new THREE.TorusGeometry(radius, tube, 16, 80);
+        const mesh = new THREE.Mesh(geo, ringMat.clone());
+        mesh.rotation.set(rx, ry, rz);
+        novaGroup.add(mesh);
+        ringMeshes.push(mesh);
+        return mesh;
+      };
+      createRing(2.15, 0.018, Math.PI / 2.2, 0.15, 0);
+      createRing(2.45, 0.012, Math.PI / 2.8, -0.4, 0.3);
+      createRing(1.85, 0.01, 0.3, 0.6, Math.PI / 3);
+
+      // Central energy core
+      const coreGeo = new THREE.IcosahedronGeometry(0.42, 3);
+      const coreMat = new THREE.MeshPhysicalMaterial({
+        color: 0xa0c0ff,
+        metalness: 0.2,
+        roughness: 0.25,
+        emissive: 0x6080c0,
+        emissiveIntensity: 1.1,
+        transmission: 0.3,
+        thickness: 0.8,
+        ior: 1.6
+      });
+      coreMesh = new THREE.Mesh(coreGeo, coreMat);
+      novaGroup.add(coreMesh);
+
+      // Floating internal components (for deconstruction + physics)
+      const partGeos = [
+        new THREE.BoxGeometry(0.22, 0.08, 0.35),
+        new THREE.OctahedronGeometry(0.16, 0),
+        new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8),
+        new THREE.TetrahedronGeometry(0.18, 0),
+        new THREE.BoxGeometry(0.12, 0.28, 0.12),
+        new THREE.IcosahedronGeometry(0.14, 0)
+      ];
+
+      const restPositions = [
+        new THREE.Vector3(0.7, 0.35, 0.4),
+        new THREE.Vector3(-0.65, 0.25, -0.35),
+        new THREE.Vector3(0.15, -0.55, 0.5),
+        new THREE.Vector3(-0.4, -0.3, 0.65),
+        new THREE.Vector3(0.55, -0.2, -0.55),
+        new THREE.Vector3(-0.25, 0.6, -0.2)
+      ];
+
+      partGeos.forEach((geo, i) => {
+        const mesh = new THREE.Mesh(geo, baseMat.clone());
+        mesh.position.copy(restPositions[i]);
+        mesh.rotation.set(
+          Math.random() * Math.PI,
+          Math.random() * Math.PI,
+          Math.random() * Math.PI
+        );
+        novaGroup.add(mesh);
+        floatParts.push({
+          mesh,
+          rest: restPositions[i].clone(),
+          vel: new THREE.Vector3(),
+          target: restPositions[i].clone(),
+          phase: Math.random() * Math.PI * 2,
+          index: i
+        });
+      });
+
+      // Initial scale for awakening
+      novaGroup.scale.setScalar(0.01);
+      novaGroup.visible = false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Particles
+    // ---------------------------------------------------------------------------
+    function createParticles() {
+      const count = state.isMobile ? 450 : 1100;
+      const geo = new THREE.BufferGeometry();
+      particlePositions = new Float32Array(count * 3);
+      particleVel = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const r = 3.5 + Math.random() * 5.5;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        particlePositions[i3] = r * Math.sin(phi) * Math.cos(theta);
+        particlePositions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        particlePositions[i3 + 2] = r * Math.cos(phi);
+        particleVel[i3] = (Math.random() - 0.5) * 0.002;
+        particleVel[i3 + 1] = (Math.random() - 0.5) * 0.002;
+        particleVel[i3 + 2] = (Math.random() - 0.5) * 0.002;
+        const c = 0.55 + Math.random() * 0.4;
+        colors[i3] = c * 0.85;
+        colors[i3 + 1] = c * 0.9;
+        colors[i3 + 2] = c;
+        sizes[i] = 0.015 + Math.random() * 0.04;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.035,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+      });
+
+      particleSystem = new THREE.Points(geo, mat);
+      scene.add(particleSystem);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Camera path (cinematic keyframes)
+    // ---------------------------------------------------------------------------
+    const camPath = [
+      { p: 0.00, pos: [0, 0.4, 11], look: [0, 0, 0] },
+      { p: 0.12, pos: [0.3, 0.5, 7.2], look: [0, 0.1, 0] },
+      { p: 0.28, pos: [1.8, 0.9, 4.5], look: [0, 0.15, 0] },
+      { p: 0.42, pos: [0.2, 0.3, 2.8], look: [0, 0.05, 0] },
+      { p: 0.55, pos: [-1.6, 0.8, 3.2], look: [0.2, 0.1, 0] },
+      { p: 0.68, pos: [0.5, 1.4, 5.5], look: [0, 0, 0] },
+      { p: 0.82, pos: [2.8, 0.6, 4.0], look: [0, 0.2, 0] },
+      { p: 1.00, pos: [0, 0.5, 6.5], look: [0, 0.1, 0] }
+    ];
+
+    function getCameraState(t) {
+      let i = 0;
+      while (i < camPath.length - 1 && camPath[i + 1].p < t) i++;
+      const a = camPath[i];
+      const b = camPath[Math.min(i + 1, camPath.length - 1)];
+      const local = b.p === a.p ? 0 : (t - a.p) / (b.p - a.p);
+      const s = smoothstep(0, 1, local);
+      return {
+        pos: new THREE.Vector3(
+          lerp(a.pos[0], b.pos[0], s),
+          lerp(a.pos[1], b.pos[1], s),
+          lerp(a.pos[2], b.pos[2], s)
+        ),
+        look: new THREE.Vector3(
+          lerp(a.look[0], b.look[0], s),
+          lerp(a.look[1], b.look[1], s),
+          lerp(a.look[2], b.look[2], s)
+        )
+      };
+    }
+
+    // ---------------------------------------------------------------------------
+    // Interaction
+    // ---------------------------------------------------------------------------
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function onPointerMove(e) {
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = -(e.clientY / window.innerHeight) * 2 + 1;
+      state.mouse.set(x, y);
+      pointer.set(x, y);
+
+      if (state.isDragging && state.dragObject) {
+        // simple plane projection for drag
+        raycaster.setFromCamera(pointer, camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const target = new THREE.Vector3();
+        raycaster.ray.intersectPlane(plane, target);
+        if (target) {
+          state.dragObject.target.lerp(target, 0.15);
+        }
+      }
+    }
+
+    function onPointerDown(e) {
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const meshes = floatParts.map(p => p.mesh);
+      const hits = raycaster.intersectObjects(meshes);
+      if (hits.length > 0) {
+        const hit = hits[0].object;
+        const part = floatParts.find(p => p.mesh === hit);
+        if (part) {
+          state.isDragging = true;
+          state.dragObject = part;
+        }
+      }
+    }
+
+    function onPointerUp() {
+      state.isDragging = false;
+      state.dragObject = null;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Update loop helpers
+    // ---------------------------------------------------------------------------
+    function updateObject(progress, dt) {
+      if (!novaGroup) return;
+
+      // Awakening scale
+      const reveal = smoothstep(0.02, 0.18, progress);
+      const s = lerp(0.01, 1, reveal);
+      novaGroup.scale.setScalar(s);
+      novaGroup.visible = s > 0.02;
+
+      // Slow continuous rotation
+      const rotSpeed = state.reducedMotion ? 0.02 : 0.08;
+      novaGroup.rotation.y += dt * rotSpeed * (1 - progress * 0.4);
+      novaGroup.rotation.x = Math.sin(state.time * 0.15) * 0.04;
+
+      // Mouse parallax tilt
+      const tiltX = state.smoothMouse.y * 0.12;
+      const tiltY = state.smoothMouse.x * 0.15;
+      novaGroup.rotation.x += (tiltX - novaGroup.rotation.x) * 0.04;
+      novaGroup.rotation.y += (tiltY * 0.3);
+
+      // Deconstruction / explode
+      const explode = smoothstep(0.62, 0.78, progress) * (1 - smoothstep(0.85, 0.97, progress));
+      const explodeAmt = explode * 1.8;
+
+      floatParts.forEach((p, i) => {
+        const angle = (i / floatParts.length) * Math.PI * 2 + state.time * 0.3;
+        const out = new THREE.Vector3(
+          Math.cos(angle) * explodeAmt * (1.2 + i * 0.15),
+          Math.sin(angle * 1.3) * explodeAmt * 0.9,
+          Math.sin(angle) * explodeAmt * 1.1
+        );
+
+        // Idle float
+        const floatY = Math.sin(state.time * 0.7 + p.phase) * 0.04 * (1 - explode);
+
+        if (!state.isDragging || state.dragObject !== p) {
+          p.target.copy(p.rest).add(out);
+          p.target.y += floatY;
+        }
+
+        // Spring physics
+        const force = p.target.clone().sub(p.mesh.position).multiplyScalar(6.5);
+        p.vel.add(force.multiplyScalar(dt));
+        p.vel.multiplyScalar(0.88); // damping
+        p.mesh.position.add(p.vel.clone().multiplyScalar(dt));
+
+        // Rotation
+        p.mesh.rotation.x += dt * (0.3 + i * 0.05) * (0.4 + explode);
+        p.mesh.rotation.y += dt * (0.25 + i * 0.04);
+      });
+
+      // Core pulse
+      if (coreMesh) {
+        const pulse = 1 + Math.sin(state.time * 2.2) * 0.06;
+        coreMesh.scale.setScalar(pulse);
+        coreLight.intensity = 1.1 + Math.sin(state.time * 2.5) * 0.35;
+      }
+
+      // Rings slow independent spin
+      ringMeshes.forEach((r, i) => {
+        r.rotation.z += dt * (0.15 + i * 0.05) * (state.reducedMotion ? 0.3 : 1);
+      });
+
+      // Liquid metal roughness animation
+      if (state.material === 'liquid') {
+        const t = state.time * 0.8;
+        shellMeshes.forEach((m, i) => {
+          if (m.material) m.material.roughness = 0.12 + Math.sin(t + i) * 0.08;
+        });
+      }
+    }
+
+    function updateParticles(progress, dt) {
+      if (!particleSystem) return;
+      const pos = particleSystem.geometry.attributes.position.array;
+      const count = pos.length / 3;
+
+      const swarm = smoothstep(0.15, 0.4, progress);
+      const vortex = smoothstep(0.45, 0.65, progress) * (1 - smoothstep(0.75, 0.9, progress));
+      const recon = smoothstep(0.88, 1.0, progress);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        let x = pos[i3], y = pos[i3 + 1], z = pos[i3 + 2];
+
+        // Mouse disturbance
+        const dx = x - state.smoothMouse.x * 3;
+        const dy = y - state.smoothMouse.y * 2;
+        const dist = Math.sqrt(dx * dx + dy * dy + z * z) + 0.001;
+        const force = 0.0008 / dist;
+        particleVel[i3] += dx * force * 0.02;
+        particleVel[i3 + 1] += dy * force * 0.02;
+
+        // Vortex
+        if (vortex > 0.01) {
+          const cx = x, cz = z;
+          const ang = 0.8 * dt * vortex;
+          const cos = Math.cos(ang), sin = Math.sin(ang);
+          const nx = cx * cos - cz * sin;
+          const nz = cx * sin + cz * cos;
+          particleVel[i3] += (nx - x) * 0.04;
+          particleVel[i3 + 2] += (nz - z) * 0.04;
+          particleVel[i3 + 1] += (Math.sin(state.time + i) * 0.3 - y) * 0.01 * vortex;
+        }
+
+        // Pull back toward shell on recon
+        if (recon > 0.01) {
+          const targetR = 2.2;
+          const r = Math.sqrt(x * x + y * y + z * z) + 0.001;
+          particleVel[i3] += (x / r * targetR - x) * 0.02 * recon;
+          particleVel[i3 + 1] += (y / r * targetR - y) * 0.02 * recon;
+          particleVel[i3 + 2] += (z / r * targetR - z) * 0.02 * recon;
+        }
+
+        // Damping + integrate
+        particleVel[i3] *= 0.985;
+        particleVel[i3 + 1] *= 0.985;
+        particleVel[i3 + 2] *= 0.985;
+        pos[i3] += particleVel[i3];
+        pos[i3 + 1] += particleVel[i3 + 1];
+        pos[i3 + 2] += particleVel[i3 + 2];
+
+        // Soft bound
+        const r2 = pos[i3] ** 2 + pos[i3 + 1] ** 2 + pos[i3 + 2] ** 2;
+        if (r2 > 81) {
+          const s = 8.5 / Math.sqrt(r2);
+          pos[i3] *= s;
+          pos[i3 + 1] *= s;
+          pos[i3 + 2] *= s;
+        }
+      }
+      particleSystem.geometry.attributes.position.needsUpdate = true;
+
+      // Opacity
+      particleSystem.material.opacity = lerp(0.15, 0.65, swarm) * (1 - recon * 0.5);
+    }
+
+    function updateTitles(progress) {
+      // Title appear early
+      const tIn = smoothstep(0.06, 0.16, progress);
+      const tOut = 1 - smoothstep(0.22, 0.32, progress);
+      const tOp = tIn * tOut;
+
+      mainTitle.style.opacity = tOp;
+      mainTitle.style.filter = `blur(${(1 - tOp) * 10}px)`;
+      mainTitle.style.transform = `translateY(${(1 - tOp) * 18}px)`;
+
+      mainSub.style.opacity = tOp * 0.9;
+      mainSub.style.filter = `blur(${(1 - tOp) * 6}px)`;
+      mainSub.style.transform = `translateY(${(1 - tOp) * 10}px)`;
+
+      if (progress > 0.08) scrollHint.classList.add('hidden');
+    }
+
+    function updateCamera(progress, dt) {
+      const { pos, look } = getCameraState(progress);
+
+      // Parallax offset
+      const px = state.smoothMouse.x * 0.35;
+      const py = state.smoothMouse.y * 0.22;
+
+      const targetPos = pos.clone().add(new THREE.Vector3(px, py, 0));
+      camera.position.lerp(targetPos, state.reducedMotion ? 0.15 : 0.045);
+      camera.lookAt(look);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Main loop
+    // ---------------------------------------------------------------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      state.time += dt;
+
+      // Smooth progress
+      state.progress += (state.targetProgress - state.progress) * (state.reducedMotion ? 0.12 : 0.06);
+
+      // Smooth mouse
+      state.smoothMouse.x += (state.mouse.x - state.smoothMouse.x) * 0.06;
+      state.smoothMouse.y += (state.mouse.y - state.smoothMouse.y) * 0.06;
+
+      updateCamera(state.progress, dt);
+      updateObject(state.progress, dt);
+      updateParticles(state.progress, dt);
+      updateTitles(state.progress);
+
+      // Lights
+      const li = state.lightIntensity;
+      keyLight.intensity = 1.6 * li;
+      rimLight.intensity = 0.75 * li;
+      coreLight.intensity = (1.0 + Math.sin(state.time * 2.2) * 0.3) * li;
+
+      // Vignette time
+      if (state.vignettePass) {
+        state.vignettePass.uniforms.time.value = state.time * 0.15;
+      }
+
+      // Bloom intensity based on material
+      if (bloomPass) {
+        bloomPass.strength = state.material === 'crystal' || state.material === 'glass' ? 0.7 : 0.45;
+      }
+
+      composer.render();
+    }
+
+    // ---------------------------------------------------------------------------
+    // Events & bootstrap
+    // ---------------------------------------------------------------------------
+    function onScroll() {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      state.targetProgress = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
+    }
+
+    function onResize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      composer.setSize(w, h);
+      bloomPass.resolution.set(w, h);
+      state.isMobile = w < 768;
+    }
+
+    function setProgress(p) {
+      progressBar.style.width = `${p}%`;
+      progressText.textContent = String(Math.floor(p)).padStart(2, '0');
+    }
+
+    async function boot() {
+      // WebGL check
+      try {
+        const test = document.createElement('canvas');
+        if (!test.getContext('webgl2') && !test.getContext('webgl')) {
+          fallback.classList.add('show');
+          loaderEl.classList.add('hidden');
+          return;
+        }
+      } catch (e) {
+        fallback.classList.add('show');
+        loaderEl.classList.add('hidden');
+        return;
+      }
+
+      // Fake + real progress for cinematic feel
+      let fake = 0;
+      const fakeInterval = setInterval(() => {
+        fake = Math.min(fake + Math.random() * 8 + 2, 88);
+        setProgress(fake);
+      }, 90);
+
+      try {
+        initRenderer();
+        setProgress(30);
+        createNova();
+        setProgress(55);
+        createParticles();
+        setProgress(75);
+        applyMaterial('chrome');
+
+        // Warm up
+        renderer.compile(scene, camera);
+        setProgress(92);
+      } catch (err) {
+        console.error(err);
+        fallback.classList.add('show');
+        loaderEl.classList.add('hidden');
+        clearInterval(fakeInterval);
+        return;
+      }
+
+      clearInterval(fakeInterval);
+      setProgress(100);
+
+      // Events
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onResize);
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      window.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointerleave', onPointerUp);
+
+      lightSlider.addEventListener('input', (e) => {
+        state.lightIntensity = parseFloat(e.target.value);
+      });
+
+      matBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          matBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyMaterial(btn.dataset.mat);
+        });
+      });
+
+      // Reduced motion
+      if (state.reducedMotion) {
+        bloomPass.strength = 0.25;
+      }
+
+      // Start
+      setTimeout(() => {
+        loaderEl.classList.add('hidden');
+        onScroll();
+        animate();
+      }, 600);
+    }
+
+    boot();
+  </script>
+</body>
+</html>
